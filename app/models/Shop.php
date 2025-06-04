@@ -76,6 +76,7 @@ class Shop {
         $city = trim((string)($data['city'] ?? ''));
         $country = trim((string)($data['country'] ?? ''));
         $currency = trim((string)($data['currency'] ?? ''));
+        $paymentMethodsJson = $data['payment_methods_json'] ?? null;
         $status = trim((string)($data['status'] ?? ''));
 
         if ($name === '') {
@@ -95,13 +96,26 @@ class Shop {
             $currency = 'USD';
         }
 
+        if ($paymentMethodsJson !== null) {
+            if (!is_string($paymentMethodsJson)) {
+                $paymentMethodsJson = null;
+            } else {
+                $decoded = json_decode($paymentMethodsJson, true);
+                if (!is_array($decoded)) {
+                    $paymentMethodsJson = null;
+                } else {
+                    $paymentMethodsJson = json_encode(array_values($decoded));
+                }
+            }
+        }
+
         $slug = $this->generateUniqueSlug($name);
         $url = BASE_URL . '/index.php?page=profile_shop&id=';
 
         $stmt = $this->db->prepare('
             INSERT INTO shops (
-                user_id, name, slug, url, description, logo, banner, email_contact, phone, address, city, country, currency, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                user_id, name, slug, url, description, logo, banner, email_contact, phone, address, city, country, currency, status, payment_methods_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             $userId,
@@ -117,7 +131,8 @@ class Shop {
             $city !== '' ? $city : null,
             $country !== '' ? $country : null,
             $currency,
-            $status !== '' ? $status : 'active'
+            $status !== '' ? $status : 'active',
+            $paymentMethodsJson
         ]);
         $newId = (int)$this->db->lastInsertId();
 
@@ -221,6 +236,21 @@ class Shop {
             }
             $updates[] = 'status = ?';
             $params[] = $status;
+        }
+
+        if (array_key_exists('payment_methods_json', $data)) {
+            $pm = $data['payment_methods_json'];
+            $pmJson = null;
+            if (is_string($pm) && trim($pm) !== '') {
+                $decoded = json_decode($pm, true);
+                if (is_array($decoded)) {
+                    $pmJson = json_encode(array_values($decoded));
+                }
+            } elseif (is_string($pm) && trim($pm) === '') {
+                $pmJson = null;
+            }
+            $updates[] = 'payment_methods_json = ?';
+            $params[] = $pmJson;
         }
 
         if (!$updates) {

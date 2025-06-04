@@ -358,6 +358,12 @@ header {
     padding: var(--spacing-md) 0;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
 .logo {
     font-size: 24px;
     font-weight: 700;
@@ -480,14 +486,55 @@ header {
 /* ============================================
    RESPONSIVE
    ============================================ */
+@media (min-width: 1024px) {
+    .header-content {
+        flex-wrap: nowrap;
+    }
+
+    .header-actions {
+        order: 1;
+        margin-left: var(--spacing-lg);
+        margin-right: auto;
+    }
+
+    .search-bar {
+        order: 2;
+        margin-left: auto;
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 0 var(--spacing-sm);
+    }
+
+    .header-content {
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .header-actions {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
     }
     
     .btn {
         padding: 10px 20px;
         font-size: 14px;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .theme-toggle {
+        width: 40px;
+        height: 40px;
+    }
+
+    .theme-toggle i {
+        font-size: 18px;
     }
     
     .card {

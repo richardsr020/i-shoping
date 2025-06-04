@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messagerie - iShopping</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        window.APP_URL = <?php echo json_encode((string)APP_URL); ?>;
+    </script>
     <style>
         /* === STYLES GÉNÉRAUX === */
         * {
@@ -711,7 +714,6 @@
                 <div class="header-action-item">
                     <div class="notification-wrapper">
                         <i class="far fa-bell"></i>
-                        <div class="notification-badge">3</div>
                     </div>
                     <span>Notifications</span>
                 </div>
@@ -739,76 +741,7 @@
                 </div>
 
                 <div class="conversations-list">
-                    <!-- Conversation 1 -->
-                    <div class="conversation-item active">
-                        <div class="conversation-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="conversation-details">
-                            <div class="conversation-header">
-                                <div class="conversation-name">Sophie Martin</div>
-                                <div class="conversation-time">10:24</div>
-                            </div>
-                            <div class="conversation-preview">Bonjour, je souhaiterais connaître la disponibilité de la robe rouge en taille M</div>
-                        </div>
-                        <div class="conversation-badge">2</div>
-                    </div>
-
-                    <!-- Conversation 2 -->
-                    <div class="conversation-item">
-                        <div class="conversation-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="conversation-details">
-                            <div class="conversation-header">
-                                <div class="conversation-name">Thomas Bernard</div>
-                                <div class="conversation-time">Hier</div>
-                            </div>
-                            <div class="conversation-preview">Merci pour votre réponse rapide! Je vais passer commande</div>
-                        </div>
-                    </div>
-
-                    <!-- Conversation 3 -->
-                    <div class="conversation-item">
-                        <div class="conversation-avatar">
-                            <i class="fas fa-store"></i>
-                        </div>
-                        <div class="conversation-details">
-                            <div class="conversation-header">
-                                <div class="conversation-name">Luxe Paris</div>
-                                <div class="conversation-time">15/06</div>
-                            </div>
-                            <div class="conversation-preview">Bonjour, nous souhaiterions collaborer avec vous sur une collection</div>
-                        </div>
-                    </div>
-
-                    <!-- Conversation 4 -->
-                    <div class="conversation-item">
-                        <div class="conversation-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="conversation-details">
-                            <div class="conversation-header">
-                                <div class="conversation-name">Marie Leroy</div>
-                                <div class="conversation-time">14/06</div>
-                            </div>
-                            <div class="conversation-preview">Ma commande n'est toujours pas arrivée, pouvez-vous m'aider?</div>
-                        </div>
-                    </div>
-
-                    <!-- Conversation 5 -->
-                    <div class="conversation-item">
-                        <div class="conversation-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="conversation-details">
-                            <div class="conversation-header">
-                                <div class="conversation-name">Jean Dupont</div>
-                                <div class="conversation-time">12/06</div>
-                            </div>
-                            <div class="conversation-preview">Je suis intéressé par le sac à main en cuir, avez-vous d'autres couleurs?</div>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -820,8 +753,8 @@
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="chat-partner-info">
-                            <h3>Sophie Martin</h3>
-                            <p>Acheteur • En ligne</p>
+                            <h3></h3>
+                            <p></p>
                         </div>
                     </div>
                     <div class="chat-actions">
@@ -832,51 +765,7 @@
                 </div>
 
                 <div class="messages-container">
-                    <!-- Message reçu -->
-                    <div class="message received">
-                        <div class="message-text">
-                            Bonjour, je souhaiterais connaître la disponibilité de la robe rouge en taille M. Est-elle toujours en stock?
-                        </div>
-                        <div class="message-time">10:24</div>
-                    </div>
-
-                    <!-- Message envoyé -->
-                    <div class="message sent">
-                        <div class="message-text">
-                            Bonjour Sophie! Oui, la robe rouge en taille M est encore disponible. Nous en avons 3 en stock.
-                        </div>
-                        <div class="message-time">10:26</div>
-                        <div class="message-status">
-                            <i class="fas fa-check-double"></i> Lu
-                        </div>
-                    </div>
-
-                    <!-- Message reçu -->
-                    <div class="message received">
-                        <div class="message-text">
-                            Parfait! Et pourriez-vous me dire si elle est ajustée ou plutôt ample? Je fais généralement du M mais j'hésite entre M et L.
-                        </div>
-                        <div class="message-time">10:27</div>
-                    </div>
-
-                    <!-- Message envoyé -->
-                    <div class="message sent">
-                        <div class="message-text">
-                            Cette robe est plutôt ajustée. Si vous préférez un peu plus d'aisance, je vous recommande la taille L. Nous proposons des retours gratuits sous 30 jours si la taille ne convient pas.
-                        </div>
-                        <div class="message-time">10:28</div>
-                        <div class="message-status">
-                            <i class="fas fa-check"></i> Envoyé
-                        </div>
-                    </div>
-
-                    <!-- Message reçu -->
-                    <div class="message received">
-                        <div class="message-text">
-                            Merci pour ces précisions! Je vais prendre la taille M alors. Une dernière question: proposez-vous une livraison express?
-                        </div>
-                        <div class="message-time">10:30</div>
-                    </div>
+                    
                 </div>
 
                 <!-- Zone de saisie -->
@@ -898,132 +787,8 @@
     </div>
 
     <script>
-        // Script pour la messagerie
-        document.addEventListener('DOMContentLoaded', function() {
-            // Gestion des conversations
-            const conversationItems = document.querySelectorAll('.conversation-item');
-            const messageInput = document.querySelector('.message-input');
-            const sendBtn = document.querySelector('.send-btn');
-            const messagesContainer = document.querySelector('.messages-container');
-            
-            // Sélectionner une conversation
-            conversationItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    conversationItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Mettre à jour l'en-tête de chat avec les infos de la conversation
-                    const userName = this.querySelector('.conversation-name').textContent;
-                    document.querySelector('.chat-partner-info h3').textContent = userName;
-                    
-                    // Réinitialiser le badge de notification
-                    const badge = this.querySelector('.conversation-badge');
-                    if (badge) {
-                        badge.style.display = 'none';
-                    }
-                });
-            });
-            
-            // Gestion de l'envoi de messages
-            function sendMessage() {
-                const text = messageInput.value.trim();
-                if (text === '') return;
-                
-                // Créer le nouveau message
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message sent';
-                messageElement.innerHTML = `
-                    <div class="message-text">${text}</div>
-                    <div class="message-time">${getCurrentTime()}</div>
-                    <div class="message-status">
-                        <i class="fas fa-check"></i> Envoyé
-                    </div>
-                `;
-                
-                // Ajouter le message au conteneur
-                messagesContainer.appendChild(messageElement);
-                
-                // Effacer le champ de saisie
-                messageInput.value = '';
-                adjustTextareaHeight();
-                
-                // Faire défiler vers le bas
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                
-                // Simuler une réponse après un délai
-                setTimeout(simulateReply, 2000);
-            }
-            
-            // Simulation d'une réponse
-            function simulateReply() {
-                const replies = [
-                    "Merci pour ces informations!",
-                    "Je vais réfléchir à votre proposition",
-                    "Parfait, je passe commande tout de suite",
-                    "Avez-vous d'autres modèles similaires?",
-                    "Quels sont vos délais de livraison?"
-                ];
-                
-                const randomReply = replies[Math.floor(Math.random() * replies.length)];
-                
-                const messageElement = document.createElement('div');
-                messageElement.className = 'message received';
-                messageElement.innerHTML = `
-                    <div class="message-text">${randomReply}</div>
-                    <div class="message-time">${getCurrentTime()}</div>
-                `;
-                
-                messagesContainer.appendChild(messageElement);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                
-                // Mettre à jour la prévisualisation de la conversation
-                const activeConversation = document.querySelector('.conversation-item.active');
-                if (activeConversation) {
-                    const preview = activeConversation.querySelector('.conversation-preview');
-                    preview.textContent = randomReply;
-                    
-                    // Mettre à jour l'heure
-                    const time = activeConversation.querySelector('.conversation-time');
-                    time.textContent = getCurrentTime();
-                }
-            }
-            
-            // Obtenir l'heure actuelle formatée
-            function getCurrentTime() {
-                const now = new Date();
-                return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
-            }
-            
-            // Ajuster la hauteur du textarea
-            function adjustTextareaHeight() {
-                messageInput.style.height = 'auto';
-                messageInput.style.height = (messageInput.scrollHeight) + 'px';
-            }
-            
-            // Événements
-            messageInput.addEventListener('input', adjustTextareaHeight);
-            messageInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-            
-            sendBtn.addEventListener('click', sendMessage);
-            
-            // Filtres de conversation
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-            
-            // Initialisation
-            adjustTextareaHeight();
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        });
+        window.CURRENT_USER_ID = <?php echo (int)($_SESSION['user_id'] ?? 0); ?>;
     </script>
+    <script src="<?php echo htmlspecialchars((string)BASE_URL); ?>/public/js/chat.js"></script>
 </body>
 </html>

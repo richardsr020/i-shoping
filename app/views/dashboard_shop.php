@@ -1,6 +1,6 @@
 <?php
 $tab = $_SESSION['view_data']['tab'] ?? ($_GET['tab'] ?? 'overview');
-$allowedTabs = ['overview', 'shops', 'products', 'orders', 'settings', 'shop_create', 'product_create', 'product_edit'];
+$allowedTabs = ['overview', 'notifications', 'shops', 'products', 'orders', 'settings', 'shop_create', 'product_create', 'product_edit'];
 if (!in_array($tab, $allowedTabs, true)) {
     $tab = 'overview';
 }
@@ -509,6 +509,7 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
         <ul class="nav-links">
             <li><a href="<?php echo url('home'); ?>"><i class="fas fa-arrow-left"></i> Accueil</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=overview" class="<?php echo $tab === 'overview' ? 'active' : ''; ?>"><i class="fas fa-home"></i> Tableau de bord</a></li>
+            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=notifications" class="<?php echo $tab === 'notifications' ? 'active' : ''; ?>"><i class="fas fa-bell"></i> Notifications</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=shops" class="<?php echo $tab === 'shops' ? 'active' : ''; ?>"><i class="fas fa-store"></i> Mes boutiques</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=products" class="<?php echo $tab === 'products' ? 'active' : ''; ?>"><i class="fas fa-shopping-bag"></i> Produits</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=orders" class="<?php echo $tab === 'orders' ? 'active' : ''; ?>"><i class="fas fa-receipt"></i> Commandes</a></li>

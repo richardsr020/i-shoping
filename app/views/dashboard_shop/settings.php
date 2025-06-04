@@ -2,6 +2,14 @@
 $data = $_SESSION['view_data'] ?? [];
 $activeShop = $data['active_shop'] ?? null;
 $error = $data['error'] ?? null;
+
+$shopPm = [];
+if ($activeShop && !empty($activeShop['payment_methods_json'])) {
+    $decoded = json_decode((string)$activeShop['payment_methods_json'], true);
+    if (is_array($decoded)) {
+        $shopPm = $decoded;
+    }
+}
 ?>
 
 <?php if ($error): ?>
@@ -75,7 +83,18 @@ $error = $data['error'] ?? null;
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
                     <label style="display: block; font-weight: 600; margin-bottom: 6px;">Devise</label>
-                    <input name="currency" type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" value="<?php echo htmlspecialchars((string)($activeShop['currency'] ?? 'USD')); ?>" placeholder="USD" />
+                    <?php $cur = (string)($activeShop['currency'] ?? 'USD'); ?>
+                    <select name="currency" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                        <?php
+                        $currencies = [
+                            'XOF','XAF','GHS','NGN','MAD','DZD','TND','EGP','KES','UGX','TZS','RWF','BIF','ZAR','USD','EUR','GBP','CHF','CAD','AUD','NZD','JPY','CNY','HKD','SGD','INR','PKR','BDT','TRY','BRL','ARS','CLP','COP','PEN','MXN','KRW','IDR','MYR','THB','VND','PHP','AED','SAR','QAR','KWD','OMR','BHD','ILS'
+                        ];
+                        foreach ($currencies as $c) {
+                            $sel = ($cur === $c) ? 'selected' : '';
+                            echo '<option value="' . htmlspecialchars($c) . '" ' . $sel . '>' . htmlspecialchars($c) . '</option>';
+                        }
+                        ?>
+                    </select>
                 </div>
                 <div>
                     <label style="display: block; font-weight: 600; margin-bottom: 6px;">Statut</label>
@@ -83,6 +102,28 @@ $error = $data['error'] ?? null;
                         <option value="active" <?php echo (($activeShop['status'] ?? 'active') === 'active') ? 'selected' : ''; ?>>Actif</option>
                         <option value="inactive" <?php echo (($activeShop['status'] ?? '') === 'inactive') ? 'selected' : ''; ?>>Inactif</option>
                     </select>
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Moyens de paiement acceptés</label>
+                <div style="display:flex; gap: 12px; flex-wrap: wrap;">
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" name="payment_methods[]" value="orange_money" <?php echo in_array('orange_money', $shopPm, true) ? 'checked' : ''; ?> />
+                        Orange Money
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" name="payment_methods[]" value="mpesa" <?php echo in_array('mpesa', $shopPm, true) ? 'checked' : ''; ?> />
+                        M-Pesa
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" name="payment_methods[]" value="airtel_money" <?php echo in_array('airtel_money', $shopPm, true) ? 'checked' : ''; ?> />
+                        Airtel Money
+                    </label>
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" name="payment_methods[]" value="crypto_usdt" <?php echo in_array('crypto_usdt', $shopPm, true) ? 'checked' : ''; ?> />
+                        Crypto USDT
+                    </label>
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">

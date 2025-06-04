@@ -40,6 +40,49 @@ class User {
         $stmt = $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)');
         $stmt->execute([$userId, $roleId]);
     }
+
+    public function setRoles(int $userId, array $roleNames): void {
+        $userId = (int)$userId;
+        if ($userId <= 0) {
+            throw new Exception('Utilisateur invalide.');
+        }
+
+        $roleNames = array_values(array_unique(array_filter(array_map('strval', $roleNames))));
+        if (empty($roleNames)) {
+            throw new Exception('Aucun rôle fourni.');
+        }
+
+        $placeholders = implode(',', array_fill(0, count($roleNames), '?'));
+        $stmt = $this->db->prepare('SELECT id, name FROM roles WHERE name IN (' . $placeholders . ')');
+        $stmt->execute($roleNames);
+        $rows = $stmt->fetchAll();
+
+        $roleIds = [];
+        foreach ($rows as $r) {
+            $rid = (int)($r['id'] ?? 0);
+            if ($rid > 0) {
+                $roleIds[] = $rid;
+            }
+        }
+        if (empty($roleIds)) {
+            throw new Exception('Rôles invalides.');
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $this->db->prepare('DELETE FROM user_roles WHERE user_id = ?')->execute([$userId]);
+            $ins = $this->db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)');
+            foreach ($roleIds as $rid) {
+                $ins->execute([$userId, $rid]);
+            }
+            $this->db->commit();
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
     
     /**
      * Créer un nouvel utilisateur
@@ -116,7 +159,12 @@ class User {
             throw new Exception("Email et mot de passe requis.");
         }
         
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt = $this->db->prepare('
+            SELECT *
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+        ');
         $stmt->execute([trim(strtolower($email))]);
         $user = $stmt->fetch();
         

@@ -7,6 +7,14 @@ $products = $data['products'] ?? [];
 
 $currency = (string)($shop['currency'] ?? 'XOF');
 
+$shopPm = [];
+if ($shop && !empty($shop['payment_methods_json'])) {
+    $decoded = json_decode((string)$shop['payment_methods_json'], true);
+    if (is_array($decoded)) {
+        $shopPm = $decoded;
+    }
+}
+
 if (!$shop) {
     echo '<main class="main-content container"><h2>Boutique introuvable</h2></main>';
     return;
@@ -74,6 +82,28 @@ if (!$shop) {
                     <div>Tél: <strong><?php echo htmlspecialchars((string)$shop['phone']); ?></strong></div>
                 <?php endif; ?>
             </div>
+
+            <?php if (!empty($shopPm)): ?>
+                <div style="margin-top: 10px; display:flex; gap: 10px; flex-wrap: wrap; align-items:center;">
+                    <div style="color: var(--color-text-muted); font-size: 13px;">Paiements:</div>
+                    <?php
+                    $pmMeta = [
+                        'orange_money' => ['label' => 'Orange Money', 'icon' => 'fa-wallet'],
+                        'mpesa' => ['label' => 'M-Pesa', 'icon' => 'fa-wallet'],
+                        'airtel_money' => ['label' => 'Airtel Money', 'icon' => 'fa-wallet'],
+                        'crypto_usdt' => ['label' => 'Crypto USDT', 'icon' => 'fa-bitcoin'],
+                    ];
+                    foreach ($shopPm as $k) {
+                        if (!isset($pmMeta[$k])) continue;
+                        $m = $pmMeta[$k];
+                        echo '<span title="' . htmlspecialchars($m['label']) . '" style="display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border: 1px solid rgba(0,0,0,0.12); background: var(--color-bg); color: var(--color-text); font-size: 12px;">';
+                        echo '<i class="fas ' . htmlspecialchars($m['icon']) . '"></i>';
+                        echo htmlspecialchars($m['label']);
+                        echo '</span>';
+                    }
+                    ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

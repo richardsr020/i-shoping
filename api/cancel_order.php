@@ -3,6 +3,7 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../app/config.php';
 require_once __DIR__ . '/../app/models/Order.php';
+require_once __DIR__ . '/../app/models/Notification.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -34,6 +35,24 @@ if ($orderId <= 0) {
 try {
     $order = new Order();
     $ok = $order->cancelByCustomer($orderId, (int)$_SESSION['user_id']);
+
+    if ($ok) {
+        try {
+            $db = getDB();
+            $stmt = $db->prepare('SELECT shop_id FROM orders WHERE id = ? LIMIT 1');
+            $stmt->execute([$orderId]);
+            $shopId = (int)($stmt->fetchColumn() ?: 0);
+            if ($shopId > 0) {
+                $notif = new Notification();
+                $notif->create(null, $shopId, 'order_canceled', 'Commande annulée', 'Un client a annulé une commande.', [
+                    'order_id' => $orderId,
+                    'buyer_user_id' => (int)$_SESSION['user_id'],
+                ]);
+            }
+        } catch (Exception $e) {
+            // best-effort
+        }
+    }
     echo json_encode(['success' => (bool)$ok]);
 } catch (Exception $e) {
     http_response_code(400);

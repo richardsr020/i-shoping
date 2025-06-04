@@ -192,6 +192,16 @@ class AuthController {
             }
             
             $_SESSION['success_message'] = 'Connexion réussie ! Bienvenue ' . $user['first_name'];
+
+            $status = (string)($user['status'] ?? 'active');
+            $until = $user['suspended_until'] ?? null;
+            $isSuspended = ($status === 'suspended');
+            if ($isSuspended && $until) {
+                $isSuspended = (strtotime((string)$until) > time());
+            }
+            if ($isSuspended) {
+                redirect('suspended');
+            }
             
             // Rediriger vers la page demandée ou la page d'accueil
             $redirect = $_SESSION['redirect_after_login'] ?? 'home';

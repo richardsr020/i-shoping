@@ -3,6 +3,7 @@
  * Header global pour toutes les pages
  * Inclut le système de thème et la navigation
  */
+require_once __DIR__ . '/../models/User.php';
 $pageTitle = isset($_SESSION['view_data']['title']) ? $_SESSION['view_data']['title'] : APP_NAME;
 $currentPage = $_GET['page'] ?? 'home';
 ?>
@@ -36,27 +37,34 @@ $currentPage = $_GET['page'] ?? 'home';
     <!-- Header Navigation -->
     <header>
         <div class="container">
-            <div class="header-content" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--spacing-md); padding: var(--spacing-md) 0;">
+            <div class="header-content">
                 <a href="<?php echo url('home'); ?>" class="logo">
                     <i class="fas fa-shopping-bag"></i>
-                    <span>i shopping</span>
+                    <span>i-shopping</span>
                 </a>
                 
                 <?php if ($currentPage === 'home'): ?>
                     <!-- Barre de recherche pour la page d'accueil -->
-                    <div class="search-bar" style="display: flex; align-items: center; flex: 0 1 500px; margin: 0 var(--spacing-md);">
-                        <input id="home-search-input" type="text" placeholder="Rechercher..." style="flex: 1;">
-                        <button id="home-search-button" style="margin-left: var(--spacing-sm);"><i class="fas fa-search"></i></button>
+                    <div class="search-bar">
+                        <input id="home-search-input" type="text" placeholder="Rechercher...">
+                        <button id="home-search-button"><i class="fas fa-search"></i></button>
                     </div>
                 <?php endif; ?>
                 
-                <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                <div class="header-actions">
                     <?php if (isLoggedIn()): ?>
+                        <?php
+                        $userModel = new User();
+                        $uid = (int)($_SESSION['user_id'] ?? 0);
+                        $canSeeAdmin = $uid > 0 && ($userModel->hasRole($uid, 'super_admin') || $userModel->hasRole($uid, 'admin'));
+                        ?>
+                        <?php if ($canSeeAdmin): ?>
+                            <a href="<?php echo url('dashboard_admin'); ?>" class="btn btn-ghost btn-sm">
+                                <i class="fas fa-shield-halved"></i> Admin
+                            </a>
+                        <?php endif; ?>
                         <a href="<?php echo url('dashboard_shop'); ?>" class="btn btn-ghost btn-sm">
                             <i class="fas fa-store"></i> Boutiques
-                        </a>
-                        <a href="<?php echo url('orders'); ?>" class="btn btn-ghost btn-sm">
-                            <i class="fas fa-receipt"></i> Commandes
                         </a>
                         <a href="<?php echo url('logout'); ?>" class="btn btn-outline btn-sm">
                             <i class="fas fa-sign-out-alt"></i> Déconnexion

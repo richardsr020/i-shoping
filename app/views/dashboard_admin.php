@@ -1,9 +1,33 @@
+<?php
+require_once __DIR__ . '/../config.php';
+
+$data = $_SESSION['view_data'] ?? [];
+$stats = $data['stats'] ?? [];
+$shops = $data['shops'] ?? [];
+$users = $data['users'] ?? [];
+$notifications = $data['notifications'] ?? [];
+$products = $data['products'] ?? [];
+$orders = $data['orders'] ?? [];
+$isSuperAdmin = (bool)($data['is_super_admin'] ?? false);
+$currentUser = $data['current_user'] ?? null;
+$unreadNotificationsCount = (int)($data['unread_notifications_count'] ?? 0);
+$recentNotifications = $data['recent_notifications'] ?? [];
+$salesByDay = $data['sales_by_day'] ?? [];
+$tab = (string)($data['tab'] ?? 'overview');
+
+$shopsCount = (int)($stats['shops'] ?? 0);
+$usersCount = (int)($stats['users'] ?? 0);
+$ordersCount = (int)($stats['orders'] ?? 0);
+$revenue = (float)($stats['revenue'] ?? 0);
+
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administration - iShopping</title>
+    <title><?php echo htmlspecialchars((string)($data['title'] ?? 'Administration - iShopping')); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* === STYLES GÉNÉRAUX === */
@@ -675,26 +699,46 @@
         </div>
         
         <div class="admin-info">
-            <div class="admin-avatar">AD</div>
+            <div class="admin-avatar">
+                <?php
+                $initials = 'AD';
+                if (is_array($currentUser)) {
+                    $fn = trim((string)($currentUser['first_name'] ?? ''));
+                    $ln = trim((string)($currentUser['last_name'] ?? ''));
+                    $initials = strtoupper(substr($fn, 0, 1) . substr($ln, 0, 1));
+                    $initials = $initials !== '' ? $initials : 'AD';
+                }
+                echo htmlspecialchars($initials);
+                ?>
+            </div>
             <div class="admin-details">
-                <h3>Admin Principal</h3>
-                <p>Dernière connexion: Aujourd'hui</p>
+                <h3>
+                    <?php
+                    $name = 'Admin';
+                    if (is_array($currentUser)) {
+                        $name = trim((string)($currentUser['first_name'] ?? '') . ' ' . (string)($currentUser['last_name'] ?? ''));
+                        $name = $name !== '' ? $name : (string)($currentUser['email'] ?? 'Admin');
+                    }
+                    echo htmlspecialchars($name);
+                    ?>
+                </h3>
+                <p><?php echo is_array($currentUser) ? htmlspecialchars((string)($currentUser['email'] ?? '')) : ''; ?></p>
             </div>
         </div>
         
         <div class="nav-section">Tableau de bord</div>
         <ul class="nav-links">
-            <li><a href="#" class="active"><i class="fas fa-home"></i> Vue d'ensemble</a></li>
-            <li><a href="#"><i class="fas fa-chart-bar"></i> Analytics</a></li>
-            <li><a href="#"><i class="fas fa-bell"></i> Notifications</a></li>
+            <li><a href="<?php echo url('home'); ?>"><i class="fas fa-arrow-left"></i> Accueil</a></li>
+            <li><a href="<?php echo url('dashboard_admin'); ?>&tab=overview" class="<?php echo $tab === 'overview' ? 'active' : ''; ?>"><i class="fas fa-home"></i> Vue d'ensemble</a></li>
+            <li><a href="<?php echo url('dashboard_admin'); ?>&tab=notifications" class="<?php echo $tab === 'notifications' ? 'active' : ''; ?>"><i class="fas fa-bell"></i> Notifications</a></li>
         </ul>
         
         <div class="nav-section">Gestion</div>
         <ul class="nav-links">
-            <li><a href="#"><i class="fas fa-store"></i> Boutiques</a></li>
-            <li><a href="#"><i class="fas fa-users"></i> Utilisateurs</a></li>
-            <li><a href="#"><i class="fas fa-shopping-cart"></i> Commandes</a></li>
-            <li><a href="#"><i class="fas fa-box"></i> Produits</a></li>
+            <li><a href="<?php echo url('dashboard_admin'); ?>&tab=shops" class="<?php echo $tab === 'shops' ? 'active' : ''; ?>"><i class="fas fa-store"></i> Boutiques</a></li>
+            <li><a href="<?php echo url('dashboard_admin'); ?>&tab=users" class="<?php echo $tab === 'users' ? 'active' : ''; ?>"><i class="fas fa-users"></i> Utilisateurs</a></li>
+            <li><a href="<?php echo url('dashboard_admin'); ?>&tab=orders" class="<?php echo $tab === 'orders' ? 'active' : ''; ?>"><i class="fas fa-shopping-cart"></i> Commandes</a></li>
+            <li><a href="<?php echo url('dashboard_admin'); ?>&tab=products" class="<?php echo $tab === 'products' ? 'active' : ''; ?>"><i class="fas fa-box"></i> Produits</a></li>
             <li><a href="#"><i class="fas fa-tags"></i> Catégories</a></li>
         </ul>
         
@@ -718,23 +762,289 @@
                 <div class="header-action-item">
                     <div class="notification-wrapper">
                         <i class="far fa-bell"></i>
-                        <div class="notification-badge">3</div>
+                        <?php if ($unreadNotificationsCount > 0): ?>
+                            <div class="notification-badge"><?php echo (int)$unreadNotificationsCount; ?></div>
+                        <?php endif; ?>
                     </div>
                     <span>Notifications</span>
-                </div>
-                <div class="header-action-item">
-                    <i class="far fa-envelope"></i>
-                    <span>Messages</span>
-                </div>
-                <div class="header-action-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Paramètres</span>
                 </div>
             </div>
         </header>
 
         <!-- Contenu du tableau de bord -->
         <div class="dashboard-content">
+            <?php if ($tab === 'notifications'): ?>
+                <div class="welcome-banner">
+                    <div class="welcome-text">
+                        <h2>Notifications</h2>
+                        <p>Journal des événements (commandes, messages, actions admin)</p>
+                    </div>
+                    <a class="btn btn-primary" href="<?php echo url('dashboard_admin'); ?>&tab=overview">Retour</a>
+                </div>
+
+                <div class="shops-section">
+                    <div class="section-header">
+                        <h2>Événements récents</h2>
+                    </div>
+                    <div class="shops-table">
+                        <div class="table-header">
+                            <div>Date</div>
+                            <div>Type</div>
+                            <div>Détails</div>
+                        </div>
+                        <?php if (empty($notifications)): ?>
+                            <div class="table-row">
+                                <div>—</div>
+                                <div>—</div>
+                                <div>Aucune notification.</div>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($notifications as $n): ?>
+                                <?php
+                                $createdAt = (string)($n['created_at'] ?? '');
+                                $createdPretty = $createdAt ? date('d/m/Y H:i', strtotime($createdAt)) : '';
+                                $type = (string)($n['type'] ?? '');
+                                $title = (string)($n['title'] ?? '');
+                                $body = (string)($n['body'] ?? '');
+                                $userEmail = (string)($n['user_email'] ?? '');
+                                $shopName = (string)($n['shop_name'] ?? '');
+                                $scope = '';
+                                if ($shopName !== '') {
+                                    $scope = 'Boutique: ' . $shopName;
+                                } elseif ($userEmail !== '') {
+                                    $scope = 'Utilisateur: ' . $userEmail;
+                                }
+                                ?>
+                                <div class="table-row">
+                                    <div><?php echo htmlspecialchars($createdPretty !== '' ? $createdPretty : '—'); ?></div>
+                                    <div><?php echo htmlspecialchars($type); ?></div>
+                                    <div>
+                                        <strong><?php echo htmlspecialchars($title); ?></strong>
+                                        <?php if ($scope !== ''): ?>
+                                            <div style="color: var(--gray-dark); font-size: 12px; margin-top: 4px;">
+                                                <?php echo htmlspecialchars($scope); ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if ($body !== ''): ?>
+                                            <div style="color: var(--gray-dark); font-size: 12px; margin-top: 4px;">
+                                                <?php echo htmlspecialchars($body); ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php elseif ($tab === 'users'): ?>
+                <div class="welcome-banner">
+                    <div class="welcome-text">
+                        <h2>Gestion des utilisateurs</h2>
+                        <p>Liste des comptes et rôles (lecture)</p>
+                    </div>
+                    <a class="btn btn-primary" href="<?php echo url('dashboard_admin'); ?>&tab=overview">Retour</a>
+                </div>
+
+                <div class="shops-section">
+                    <div class="section-header">
+                        <h2>Utilisateurs</h2>
+                        <?php if ($isSuperAdmin): ?>
+                            <button class="btn btn-primary" onclick="document.getElementById('create-admin-form').style.display = (document.getElementById('create-admin-form').style.display === 'none' ? 'block' : 'none'); return false;">Nouvel admin</button>
+                        <?php else: ?>
+                            <button class="btn btn-primary" disabled>Nouvel utilisateur</button>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($isSuperAdmin): ?>
+                        <form id="create-admin-form" method="POST" action="<?php echo url('dashboard_admin'); ?>&action=user_create" style="display:none; margin: 12px 0;">
+                            <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+                                <input name="first_name" placeholder="Prénom" required>
+                                <input name="last_name" placeholder="Nom" required>
+                                <input name="email" placeholder="Email" required>
+                                <input name="password" placeholder="Mot de passe" required>
+                                <select name="role">
+                                    <option value="admin" selected>admin</option>
+                                    <option value="super_admin">super_admin</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary">Créer</button>
+                            </div>
+                        </form>
+                    <?php endif; ?>
+
+                    <div class="shops-table">
+                        <div class="table-header">
+                            <div>ID</div>
+                            <div>Nom</div>
+                            <div>Email</div>
+                            <div>Rôles</div>
+                            <div>Statut</div>
+                            <div>Actions</div>
+                        </div>
+
+                        <?php if (empty($users)): ?>
+                            <div class="table-row">
+                                <div style="padding: 14px; color: var(--gray-dark);">Aucun utilisateur.</div>
+                                <div></div><div></div><div></div><div></div>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($users as $u): ?>
+                                <?php
+                                $fullName = trim((string)($u['first_name'] ?? '') . ' ' . (string)($u['last_name'] ?? ''));
+                                $ustatus = (string)($u['status'] ?? 'active');
+                                $until = $u['suspended_until'] ?? null;
+                                $untilPretty = $until ? date('d/m/Y H:i', strtotime((string)$until)) : '';
+                                ?>
+                                <div class="table-row">
+                                    <div><?php echo (int)($u['id'] ?? 0); ?></div>
+                                    <div><?php echo htmlspecialchars($fullName); ?></div>
+                                    <div><?php echo htmlspecialchars((string)($u['email'] ?? '')); ?></div>
+                                    <div><?php echo htmlspecialchars((string)($u['roles'] ?? '')); ?></div>
+                                    <div><?php echo $ustatus === 'suspended' ? ('Suspendu' . ($untilPretty ? ' jusqu\'au ' . htmlspecialchars($untilPretty) : ' (indéfini)')) : 'Actif'; ?></div>
+                                    <div>
+                                        <?php if ($isSuperAdmin): ?>
+                                            <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=user_set_role" style="display:inline-block;">
+                                                <input type="hidden" name="user_id" value="<?php echo (int)($u['id'] ?? 0); ?>">
+                                                <select name="role">
+                                                    <option value="customer">customer</option>
+                                                    <option value="vendor">vendor</option>
+                                                    <option value="admin">admin</option>
+                                                    <option value="super_admin">super_admin</option>
+                                                </select>
+                                                <button type="submit" class="btn btn-secondary btn-sm">Rôle</button>
+                                            </form>
+                                        <?php endif; ?>
+                                        <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=user_suspend" style="display:inline-block;">
+                                            <input type="hidden" name="user_id" value="<?php echo (int)($u['id'] ?? 0); ?>">
+                                            <select name="days">
+                                                <option value="7">7 jours</option>
+                                                <option value="30">30 jours</option>
+                                                <option value="">Indéfini</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-secondary btn-sm">Suspendre</button>
+                                        </form>
+                                        <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=user_unsuspend" style="display:inline-block;">
+                                            <input type="hidden" name="user_id" value="<?php echo (int)($u['id'] ?? 0); ?>">
+                                            <button type="submit" class="btn btn-primary btn-sm">Réactiver</button>
+                                        </form>
+                                        <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=user_delete" style="display:inline-block;" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+                                            <input type="hidden" name="user_id" value="<?php echo (int)($u['id'] ?? 0); ?>">
+                                            <button type="submit" class="btn btn-outline btn-sm">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php elseif ($tab === 'shops'): ?>
+                <div class="welcome-banner">
+                    <div class="welcome-text">
+                        <h2>Gestion des boutiques</h2>
+                        <p>Liste des boutiques</p>
+                    </div>
+                    <a class="btn btn-primary" href="<?php echo url('dashboard_admin'); ?>&tab=overview">Retour</a>
+                </div>
+
+                <div class="shops-section">
+                    <div class="shops-table">
+                        <div class="table-header">
+                            <div>ID</div><div>Boutique</div><div>Statut</div><div>Revenus</div><div>Actions</div>
+                        </div>
+                        <?php foreach ($shops as $s): ?>
+                            <div class="table-row">
+                                <div><?php echo (int)($s['id'] ?? 0); ?></div>
+                                <div><?php echo htmlspecialchars((string)($s['name'] ?? '')); ?></div>
+                                <div><?php echo htmlspecialchars((string)($s['status'] ?? '')); ?></div>
+                                <div><?php echo htmlspecialchars(number_format((float)($s['revenue_total'] ?? 0), 0, ',', ' ')); ?></div>
+                                <div>
+                                    <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=shop_suspend" style="display:inline-block;">
+                                        <input type="hidden" name="shop_id" value="<?php echo (int)($s['id'] ?? 0); ?>">
+                                        <input type="hidden" name="days" value="">
+                                        <button type="submit" class="btn btn-secondary btn-sm">Suspendre</button>
+                                    </form>
+                                    <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=shop_unsuspend" style="display:inline-block;">
+                                        <input type="hidden" name="shop_id" value="<?php echo (int)($s['id'] ?? 0); ?>">
+                                        <button type="submit" class="btn btn-primary btn-sm">Réactiver</button>
+                                    </form>
+                                    <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=shop_delete" style="display:inline-block;" onsubmit="return confirm('Supprimer cette boutique ?');">
+                                        <input type="hidden" name="shop_id" value="<?php echo (int)($s['id'] ?? 0); ?>">
+                                        <button type="submit" class="btn btn-outline btn-sm">Supprimer</button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php elseif ($tab === 'products'): ?>
+                <div class="welcome-banner">
+                    <div class="welcome-text">
+                        <h2>Gestion des produits</h2>
+                        <p>Liste des produits</p>
+                    </div>
+                    <a class="btn btn-primary" href="<?php echo url('dashboard_admin'); ?>&tab=overview">Retour</a>
+                </div>
+
+                <div class="shops-section">
+                    <div class="shops-table">
+                        <div class="table-header">
+                            <div>ID</div><div>Produit</div><div>Boutique</div><div>Prix</div><div>Statut</div><div>Actions</div>
+                        </div>
+                        <?php foreach ($products as $p): ?>
+                            <div class="table-row">
+                                <div><?php echo (int)($p['id'] ?? 0); ?></div>
+                                <div><?php echo htmlspecialchars((string)($p['name'] ?? '')); ?></div>
+                                <div><?php echo htmlspecialchars((string)($p['shop_name'] ?? '')); ?></div>
+                                <div><?php echo htmlspecialchars(number_format((float)($p['price'] ?? 0), 0, ',', ' ')); ?></div>
+                                <div><?php echo htmlspecialchars((string)($p['status'] ?? '')); ?></div>
+                                <div>
+                                    <?php if ((string)($p['status'] ?? '') !== 'active'): ?>
+                                        <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=product_activate" style="display:inline-block;">
+                                            <input type="hidden" name="product_id" value="<?php echo (int)($p['id'] ?? 0); ?>">
+                                            <button type="submit" class="btn btn-primary btn-sm">Activer</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=product_deactivate" style="display:inline-block;">
+                                            <input type="hidden" name="product_id" value="<?php echo (int)($p['id'] ?? 0); ?>">
+                                            <button type="submit" class="btn btn-secondary btn-sm">Désactiver</button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <form method="POST" action="<?php echo url('dashboard_admin'); ?>&action=product_delete" style="display:inline-block;" onsubmit="return confirm('Supprimer ce produit ?');">
+                                        <input type="hidden" name="product_id" value="<?php echo (int)($p['id'] ?? 0); ?>">
+                                        <button type="submit" class="btn btn-outline btn-sm">Supprimer</button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php elseif ($tab === 'orders'): ?>
+                <div class="welcome-banner">
+                    <div class="welcome-text">
+                        <h2>Gestion des commandes</h2>
+                        <p>Liste des commandes</p>
+                    </div>
+                    <a class="btn btn-primary" href="<?php echo url('dashboard_admin'); ?>&tab=overview">Retour</a>
+                </div>
+
+                <div class="shops-section">
+                    <div class="shops-table">
+                        <div class="table-header">
+                            <div>ID</div><div>Client</div><div>Boutique</div><div>Total</div><div>Statut</div><div>Date</div>
+                        </div>
+                        <?php foreach ($orders as $o): ?>
+                            <?php $createdAt = (string)($o['created_at'] ?? ''); ?>
+                            <div class="table-row">
+                                <div><?php echo (int)($o['id'] ?? 0); ?></div>
+                                <div><?php echo htmlspecialchars((string)($o['customer_name'] ?? ($o['customer_email'] ?? ''))); ?></div>
+                                <div><?php echo htmlspecialchars((string)($o['shop_name'] ?? '')); ?></div>
+                                <div><?php echo htmlspecialchars(number_format((float)($o['total'] ?? 0), 0, ',', ' ')); ?></div>
+                                <div><?php echo htmlspecialchars((string)($o['status'] ?? '')); ?></div>
+                                <div><?php echo htmlspecialchars($createdAt ? date('d/m/Y H:i', strtotime($createdAt)) : ''); ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else: ?>
             <!-- Bannière de bienvenue -->
             <div class="welcome-banner">
                 <div class="welcome-text">
@@ -749,7 +1059,7 @@
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Boutiques</h3>
-                        <div class="stat-value">248</div>
+                        <div class="stat-value"><?php echo (int)$shopsCount; ?></div>
                         <div class="stat-change"><i class="fas fa-arrow-up"></i> 12% ce mois</div>
                     </div>
                     <div class="stat-icon shops">
@@ -759,7 +1069,7 @@
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Utilisateurs</h3>
-                        <div class="stat-value">15,842</div>
+                        <div class="stat-value"><?php echo (int)$usersCount; ?></div>
                         <div class="stat-change"><i class="fas fa-arrow-up"></i> 8% ce mois</div>
                     </div>
                     <div class="stat-icon users">
@@ -769,7 +1079,7 @@
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Commandes</h3>
-                        <div class="stat-value">3,427</div>
+                        <div class="stat-value"><?php echo (int)$ordersCount; ?></div>
                         <div class="stat-change"><i class="fas fa-arrow-up"></i> 15% ce mois</div>
                     </div>
                     <div class="stat-icon orders">
@@ -779,7 +1089,7 @@
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Revenus</h3>
-                        <div class="stat-value">$284,592</div>
+                        <div class="stat-value"><?php echo htmlspecialchars(number_format($revenue, 0, ',', ' ')); ?></div>
                         <div class="stat-change"><i class="fas fa-arrow-up"></i> 22% ce mois</div>
                     </div>
                     <div class="stat-icon revenue">
@@ -800,8 +1110,21 @@
                             <option>90 derniers jours</option>
                         </select>
                     </div>
-                    <div class="chart-placeholder">
-                        Graphique des performances - Intégration avec une bibliothèque de graphiques
+                    <div class="chart-placeholder" style="height: auto; min-height: 120px;">
+                        <?php if (empty($salesByDay)): ?>
+                            <div style="color: var(--gray-dark);">Aucune vente payée sur la période.</div>
+                        <?php else: ?>
+                            <div style="display: grid; gap: 8px;">
+                                <?php foreach ($salesByDay as $row): ?>
+                                    <div style="display: flex; justify-content: space-between; gap: 12px;">
+                                        <span style="font-size: 12px; color: var(--gray-dark);">
+                                            <?php echo htmlspecialchars((string)($row['day'] ?? '')); ?>
+                                        </span>
+                                        <strong><?php echo htmlspecialchars(number_format((float)($row['total'] ?? 0), 0, ',', ' ')); ?></strong>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -809,54 +1132,63 @@
                 <div class="recent-activities">
                     <div class="activities-header">
                         <h3>Activités récentes</h3>
-                        <a href="#">Voir tout</a>
+                        <a href="<?php echo url('dashboard_admin'); ?>&tab=notifications">Voir tout</a>
                     </div>
                     <ul class="activities-list">
-                        <li class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-store"></i>
-                            </div>
-                            <div class="activity-details">
-                                <div class="activity-text">Nouvelle boutique "Luxe Paris" a été créée</div>
-                                <div class="activity-time">Il y a 5 minutes</div>
-                            </div>
-                        </li>
-                        <li class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="activity-details">
-                                <div class="activity-text">Utilisateur Jean Dupont a été banni</div>
-                                <div class="activity-time">Il y a 1 heure</div>
-                            </div>
-                        </li>
-                        <li class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                            <div class="activity-details">
-                                <div class="activity-text">Nouvelle commande #ORD-8921 de plus de $500</div>
-                                <div class="activity-time">Il y a 2 heures</div>
-                            </div>
-                        </li>
-                        <li class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="activity-details">
-                                <div class="activity-text">Problème de paiement détecté chez FashionStyle</div>
-                                <div class="activity-time">Il y a 3 heures</div>
-                            </div>
-                        </li>
-                        <li class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-cog"></i>
-                            </div>
-                            <div class="activity-details">
-                                <div class="activity-text">Mise à jour des paramètres de sécurité</div>
-                                <div class="activity-time">Il y a 5 heures</div>
-                            </div>
-                        </li>
+                        <?php if (empty($recentNotifications)): ?>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div class="activity-details">
+                                    <div class="activity-text">Aucune activité récente.</div>
+                                    <div class="activity-time">—</div>
+                                </div>
+                            </li>
+                        <?php else: ?>
+                            <?php foreach ($recentNotifications as $n): ?>
+                                <?php
+                                $type = (string)($n['type'] ?? '');
+                                $title = (string)($n['title'] ?? '');
+                                $shopName = (string)($n['shop_name'] ?? '');
+                                $userEmail = (string)($n['user_email'] ?? '');
+                                $createdAt = (string)($n['created_at'] ?? '');
+                                $createdPretty = $createdAt ? date('d/m/Y H:i', strtotime($createdAt)) : '';
+
+                                $icon = 'fa-bell';
+                                if (strpos($type, 'order_') === 0) {
+                                    $icon = 'fa-shopping-cart';
+                                } elseif ($type === 'chat_message') {
+                                    $icon = 'fa-comment';
+                                } elseif (strpos($type, 'user_') === 0) {
+                                    $icon = 'fa-user';
+                                } elseif (strpos($type, 'shop_') === 0) {
+                                    $icon = 'fa-store';
+                                }
+
+                                $scope = '';
+                                if ($shopName !== '') {
+                                    $scope = 'Boutique: ' . $shopName;
+                                } elseif ($userEmail !== '') {
+                                    $scope = 'Utilisateur: ' . $userEmail;
+                                }
+                                ?>
+                                <li class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas <?php echo htmlspecialchars($icon); ?>"></i>
+                                    </div>
+                                    <div class="activity-details">
+                                        <div class="activity-text">
+                                            <?php echo htmlspecialchars($title !== '' ? $title : $type); ?>
+                                            <?php if ($scope !== ''): ?>
+                                                <span style="color: var(--gray-dark); font-size: 12px;">(<?php echo htmlspecialchars($scope); ?>)</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="activity-time"><?php echo htmlspecialchars($createdPretty !== '' ? $createdPretty : '—'); ?></div>
+                                    </div>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </div>
@@ -877,85 +1209,49 @@
                         <div>Actions</div>
                     </div>
 
-                    <div class="table-row">
-                        <div class="shop-info">
-                            <div class="shop-avatar">
-                                <i class="fas fa-crown"></i>
-                            </div>
-                            <div class="shop-details">
-                                <h4>Fashionista Boutique</h4>
-                                <p>Créée le 15/03/2023</p>
-                            </div>
+                    <?php if (empty($shops)): ?>
+                        <div class="table-row">
+                            <div style="padding: 14px; color: var(--gray-dark);">Aucune boutique.</div>
+                            <div></div><div></div><div></div><div></div>
                         </div>
-                        <div>Sophie Martin</div>
-                        <div><span class="status-badge active">Active</span></div>
-                        <div>$28,450</div>
-                        <div class="action-buttons">
-                            <button class="action-btn"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn"><i class="fas fa-chart-bar"></i></button>
-                            <button class="action-btn"><i class="fas fa-ban"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="table-row">
-                        <div class="shop-info">
-                            <div class="shop-avatar">
-                                <i class="fas fa-gem"></i>
+                    <?php else: ?>
+                        <?php foreach ($shops as $s): ?>
+                            <?php
+                            $status = (string)($s['status'] ?? 'active');
+                            $statusClass = 'pending';
+                            $statusLabel = 'En attente';
+                            if ($status === 'active') {
+                                $statusClass = 'active';
+                                $statusLabel = 'Active';
+                            } elseif ($status === 'inactive') {
+                                $statusClass = 'suspended';
+                                $statusLabel = 'Suspendue';
+                            }
+                            $created = (string)($s['created_at'] ?? '');
+                            $createdPretty = $created ? date('d/m/Y', strtotime($created)) : '';
+                            $ownerName = trim((string)($s['owner_first_name'] ?? '') . ' ' . (string)($s['owner_last_name'] ?? ''));
+                            ?>
+                            <div class="table-row">
+                                <div class="shop-info">
+                                    <div class="shop-avatar">
+                                        <i class="fas fa-store"></i>
+                                    </div>
+                                    <div class="shop-details">
+                                        <h4><?php echo htmlspecialchars((string)($s['name'] ?? '')); ?></h4>
+                                        <p><?php echo $createdPretty !== '' ? 'Créée le ' . htmlspecialchars($createdPretty) : ''; ?></p>
+                                    </div>
+                                </div>
+                                <div><?php echo htmlspecialchars($ownerName !== '' ? $ownerName : (string)($s['owner_email'] ?? '')); ?></div>
+                                <div><span class="status-badge <?php echo htmlspecialchars($statusClass); ?>"><?php echo htmlspecialchars($statusLabel); ?></span></div>
+                                <div><?php echo htmlspecialchars(number_format((float)($s['revenue_total'] ?? 0), 0, ',', ' ')); ?></div>
+                                <div class="action-buttons">
+                                    <button class="action-btn" title="Éditer"><i class="fas fa-edit"></i></button>
+                                    <button class="action-btn" title="Analytics"><i class="fas fa-chart-bar"></i></button>
+                                    <button class="action-btn" title="Suspendre"><i class="fas fa-ban"></i></button>
+                                </div>
                             </div>
-                            <div class="shop-details">
-                                <h4>Luxe Paris</h4>
-                                <p>Créée le 22/05/2023</p>
-                            </div>
-                        </div>
-                        <div>Pierre Dubois</div>
-                        <div><span class="status-badge active">Active</span></div>
-                        <div>$18,920</div>
-                        <div class="action-buttons">
-                            <button class="action-btn"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn"><i class="fas fa-chart-bar"></i></button>
-                            <button class="action-btn"><i class="fas fa-ban"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="table-row">
-                        <div class="shop-info">
-                            <div class="shop-avatar">
-                                <i class="fas fa-tshirt"></i>
-                            </div>
-                            <div class="shop-details">
-                                <h4>Urban Style</h4>
-                                <p>Créée le 10/04/2023</p>
-                            </div>
-                        </div>
-                        <div>Thomas Bernard</div>
-                        <div><span class="status-badge pending">En attente</span></div>
-                        <div>$0</div>
-                        <div class="action-buttons">
-                            <button class="action-btn"><i class="fas fa-check"></i></button>
-                            <button class="action-btn"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="table-row">
-                        <div class="shop-info">
-                            <div class="shop-avatar">
-                                <i class="fas fa-shoe-prints"></i>
-                            </div>
-                            <div class="shop-details">
-                                <h4>Chic Shoes</h4>
-                                <p>Créée le 05/02/2023</p>
-                            </div>
-                        </div>
-                        <div>Marie Leroy</div>
-                        <div><span class="status-badge suspended">Suspendue</span></div>
-                        <div>$12,340</div>
-                        <div class="action-buttons">
-                            <button class="action-btn"><i class="fas fa-play"></i></button>
-                            <button class="action-btn"><i class="fas fa-edit"></i></button>
-                            <button class="action-btn"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -967,7 +1263,7 @@
                     </div>
                     <h4>Gestion des utilisateurs</h4>
                     <p>Gérez les comptes utilisateurs et permissions</p>
-                    <button class="btn btn-primary">Accéder</button>
+                    <a class="btn btn-primary" href="<?php echo url('dashboard_admin'); ?>&tab=users">Accéder</a>
                 </div>
                 <div class="action-card">
                     <div class="action-icon">
@@ -994,6 +1290,7 @@
                     <button class="btn btn-secondary">Configurer</button>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -1011,6 +1308,7 @@
 
             // Simulation de données pour les cartes de statistiques
             function updateStats() {
+                return;
                 // Dans une application réelle, on récupérerait ces données via une API
                 const stats = [
                     { id: 'shops', value: 248, change: 12 },
@@ -1042,6 +1340,7 @@
             const actionButtons = document.querySelectorAll('.action-btn');
             actionButtons.forEach(button => {
                 button.addEventListener('click', function() {
+                    return;
                     const icon = this.querySelector('i').className;
                     const shopName = this.closest('.table-row').querySelector('h4').textContent;
                     

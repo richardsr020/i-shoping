@@ -102,6 +102,8 @@ function initDatabase($db) {
         password TEXT NOT NULL,
         birth_date DATE,
         gender TEXT,
+        status TEXT DEFAULT 'active',
+        suspended_until DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
@@ -133,10 +135,16 @@ function initDatabase($db) {
         currency TEXT DEFAULT 'USD',
         stars REAL DEFAULT 0,
         status TEXT DEFAULT 'active',
+        suspended_until DATETIME,
+        payment_methods_json TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )");
+
+    $ensureColumns('shops', [
+        'payment_methods_json' => 'TEXT'
+    ]);
 
     // Table products (schéma export.sql)
     $db->exec("CREATE TABLE IF NOT EXISTS products (
@@ -220,7 +228,47 @@ function initDatabase($db) {
         FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
     )");
 
+    $db->exec("CREATE TABLE IF NOT EXISTS conversations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        shop_id INTEGER NOT NULL,
+        buyer_user_id INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(shop_id, buyer_user_id),
+        FOREIGN KEY(shop_id) REFERENCES shops(id) ON DELETE CASCADE,
+        FOREIGN KEY(buyer_user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        conversation_id INTEGER NOT NULL,
+        sender_user_id INTEGER NOT NULL,
+        body TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+        FOREIGN KEY(sender_user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+
+    $db->exec("CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        shop_id INTEGER,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT,
+        data_json TEXT,
+        is_read INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY(shop_id) REFERENCES shops(id) ON DELETE CASCADE
+    )");
+
     // Migrer shops/products si DB existante plus ancienne
+    $ensureColumns('users', [
+        'status' => "TEXT DEFAULT 'active'",
+        'suspended_until' => 'DATETIME'
+    ]);
+
     $ensureColumns('shops', [
         'slug' => 'TEXT',
         'url' => 'TEXT',
@@ -232,7 +280,8 @@ function initDatabase($db) {
         'country' => 'TEXT',
         'currency' => "TEXT DEFAULT 'USD'",
         'stars' => 'REAL DEFAULT 0',
-        'status' => "TEXT DEFAULT 'active'"
+        'status' => "TEXT DEFAULT 'active'",
+        'suspended_until' => 'DATETIME'
     ]);
 
     $ensureColumns('products', [
@@ -256,6 +305,44 @@ function initDatabase($db) {
     $db->exec("INSERT OR IGNORE INTO roles (id, name, level) VALUES (2, 'admin', 2)");
     $db->exec("INSERT OR IGNORE INTO roles (id, name, level) VALUES (3, 'vendor', 3)");
     $db->exec("INSERT OR IGNORE INTO roles (id, name, level) VALUES (4, 'customer', 4)");
+
+    // Seed super_admin (idempotent)
+    $superAdminEmail = 'admin@ishop.local';
+    $superAdminPassword = 'richardI022IS';
+
+    $stmt = $db->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+    $stmt->execute([$superAdminEmail]);
+    $superAdminId = (int)($stmt->fetchColumn() ?: 0);
+
+    if ($superAdminId <= 0) {
+        $hashed = password_hash($superAdminPassword, PASSWORD_ALGORITHM);
+        $db->beginTransaction();
+        try {
+            $ins = $db->prepare('INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)');
+            $ins->execute(['Super', 'Admin', $superAdminEmail, $hashed]);
+            $superAdminId = (int)$db->lastInsertId();
+            $db->commit();
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    if ($superAdminId > 0) {
+        $roleStmt = $db->prepare('SELECT id FROM roles WHERE name = ?');
+        $roleStmt->execute(['super_admin']);
+        $roleId = (int)($roleStmt->fetchColumn() ?: 0);
+        if ($roleId > 0) {
+            $check = $db->prepare('SELECT 1 FROM user_roles WHERE user_id = ? AND role_id = ? LIMIT 1');
+            $check->execute([$superAdminId, $roleId]);
+            if (!$check->fetchColumn()) {
+                $ur = $db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)');
+                $ur->execute([$superAdminId, $roleId]);
+            }
+        }
+    }
 
     // Index pour améliorer les performances
     $db->exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");

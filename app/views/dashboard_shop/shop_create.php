@@ -72,7 +72,18 @@ $canCreateShop = empty($shops);
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 6px;">Devise</label>
-                <input name="currency" type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" value="USD" placeholder="USD" />
+                <?php $cur = 'USD'; ?>
+                <select name="currency" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                    <?php
+                    $currencies = [
+                        'XOF','XAF','GHS','NGN','MAD','DZD','TND','EGP','KES','UGX','TZS','RWF','BIF','ZAR','USD','EUR','GBP','CHF','CAD','AUD','NZD','JPY','CNY','HKD','SGD','INR','PKR','BDT','TRY','BRL','ARS','CLP','COP','PEN','MXN','KRW','IDR','MYR','THB','VND','PHP','AED','SAR','QAR','KWD','OMR','BHD','ILS'
+                    ];
+                    foreach ($currencies as $c) {
+                        $sel = ($cur === $c) ? 'selected' : '';
+                        echo '<option value="' . htmlspecialchars($c) . '" ' . $sel . '>' . htmlspecialchars($c) . '</option>';
+                    }
+                    ?>
+                </select>
             </div>
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 6px;">Statut</label>
@@ -80,6 +91,28 @@ $canCreateShop = empty($shops);
                     <option value="active" selected>Actif</option>
                     <option value="inactive">Inactif</option>
                 </select>
+            </div>
+        </div>
+
+        <div>
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Moyens de paiement acceptés</label>
+            <div style="display:flex; gap: 12px; flex-wrap: wrap;">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" name="payment_methods[]" value="orange_money" />
+                    Orange Money
+                </label>
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" name="payment_methods[]" value="mpesa" />
+                    M-Pesa
+                </label>
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" name="payment_methods[]" value="airtel_money" />
+                    Airtel Money
+                </label>
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" name="payment_methods[]" value="crypto_usdt" />
+                    Crypto USDT
+                </label>
             </div>
         </div>
 

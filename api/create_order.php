@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../app/config.php';
 require_once __DIR__ . '/../app/models/Order.php';
 require_once __DIR__ . '/../app/models/Product.php';
+require_once __DIR__ . '/../app/models/Notification.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -70,6 +71,17 @@ try {
             'size' => $size
         ]
     ], $paymentMethod);
+
+    try {
+        $notif = new Notification();
+        $notif->create(null, $shopId, 'order_created', 'Nouvelle commande', 'Vous avez reçu une nouvelle commande.', [
+            'order_id' => $orderId,
+            'product_id' => $productId,
+            'buyer_user_id' => (int)$_SESSION['user_id'],
+        ]);
+    } catch (Exception $e) {
+        // best-effort
+    }
 
     echo json_encode(['success' => true, 'order_id' => $orderId]);
 } catch (Exception $e) {

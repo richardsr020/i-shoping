@@ -11,8 +11,30 @@ require_once __DIR__ . '/app/config.php';
 $page = $_GET['page'] ?? 'home';
 $action = $_GET['action'] ?? null;
 
+// Guard: si utilisateur connecté et suspendu, rediriger vers la page dédiée
+if (isLoggedIn()) {
+    $allowPages = ['suspended', 'logout'];
+    if (!in_array($page, $allowPages, true)) {
+        $db = getDB();
+        $stmt = $db->prepare('SELECT status, suspended_until FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([(int)($_SESSION['user_id'] ?? 0)]);
+        $u = $stmt->fetch() ?: [];
+
+        $status = (string)($u['status'] ?? 'active');
+        $until = $u['suspended_until'] ?? null;
+        $isSuspended = ($status === 'suspended');
+        if ($isSuspended && $until) {
+            $isSuspended = (strtotime((string)$until) > time());
+        }
+
+        if ($isSuspended) {
+            redirect('suspended');
+        }
+    }
+}
+
 // Routes qui ont leurs propres templates HTML complets (pas de header/footer commun)
-$fullPageRoutes = ['login', 'register', 'dashboard_shop'];
+$fullPageRoutes = ['login', 'register', 'dashboard_shop', 'dashboard_admin', 'chat', 'suspended'];
 
 // Si c'est une route avec template complet, charger directement la vue après le contrôleur
 if (in_array($page, $fullPageRoutes)) {
@@ -29,6 +51,12 @@ if (in_array($page, $fullPageRoutes)) {
         require_once __DIR__ . '/app/views/register.php';
     } elseif ($page === 'dashboard_shop') {
         require_once __DIR__ . '/app/views/dashboard_shop.php';
+    } elseif ($page === 'dashboard_admin') {
+        require_once __DIR__ . '/app/views/dashboard_admin.php';
+    } elseif ($page === 'chat') {
+        require_once __DIR__ . '/app/views/chat.php';
+    } elseif ($page === 'suspended') {
+        require_once __DIR__ . '/app/views/suspended.php';
     }
     exit;
 }

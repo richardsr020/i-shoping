@@ -19,6 +19,22 @@ class Router {
      * Définir les routes et leurs contrôleurs
      */
     public function route() {
+        if ($this->page === 'suspended') {
+            if (!isLoggedIn()) {
+                redirect('login');
+            }
+
+            $db = getDB();
+            $stmt = $db->prepare('SELECT suspended_until FROM users WHERE id = ? LIMIT 1');
+            $stmt->execute([(int)($_SESSION['user_id'] ?? 0)]);
+            $row = $stmt->fetch() ?: [];
+
+            $_SESSION['view_data'] = [
+                'title' => 'Compte suspendu - ' . APP_NAME,
+                'suspended_until' => $row['suspended_until'] ?? null,
+            ];
+            return;
+        }
         // Routes d'authentification
         if ($this->page === 'login') {
             require_once CONTROLLERS_PATH . '/AuthController.php';
@@ -98,15 +114,50 @@ class Router {
         
         // Route admin
         if ($this->page === 'dashboard_admin') {
-            require_once CONTROLLERS_PATH . '/HomeController.php';
-            $controller = new HomeController();
-            $controller->admin();
+            require_once CONTROLLERS_PATH . '/AdminController.php';
+            $controller = new AdminController();
+
+            if ($this->action === 'user_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->createUser();
+            } elseif ($this->action === 'user_set_role' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->setUserRole();
+            } elseif ($this->action === 'product_activate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->productActivate();
+            } elseif ($this->action === 'product_deactivate' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->productDeactivate();
+            } elseif ($this->action === 'product_delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->productDelete();
+            } elseif ($this->action === 'user_suspend' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->suspendUser();
+            } elseif ($this->action === 'user_unsuspend' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->unsuspendUser();
+            } elseif ($this->action === 'user_delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->deleteUser();
+            } elseif ($this->action === 'shop_suspend' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->suspendShop();
+            } elseif ($this->action === 'shop_unsuspend' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->unsuspendShop();
+            } elseif ($this->action === 'shop_delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->deleteShop();
+            } else {
+                $controller->index();
+            }
             return;
         }
         
         // Route chat
         if ($this->page === 'chat') {
-            // Charger la vue directement
+            require_once CONTROLLERS_PATH . '/ChatController.php';
+            $controller = new ChatController();
+            if ($this->action === 'list' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+                $controller->listConversations();
+            } elseif ($this->action === 'poll' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->pollMessages();
+            } elseif ($this->action === 'send' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->sendMessage();
+            } else {
+                $controller->index();
+            }
             return;
         }
         

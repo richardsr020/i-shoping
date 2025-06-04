@@ -5,6 +5,7 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/ProductImage.php';
 require_once __DIR__ . '/../models/ProductVariant.php';
 require_once __DIR__ . '/../models/Order.php';
+require_once __DIR__ . '/../models/Notification.php';
 
 class ShopController {
     public function create() {
@@ -44,6 +45,19 @@ class ShopController {
                         throw new Exception('Pour le moment, un compte ne peut créer qu\'une seule boutique.');
                     }
 
+                    $allowedPaymentMethods = ['orange_money', 'mpesa', 'airtel_money', 'crypto_usdt'];
+                    $pm = $_POST['payment_methods'] ?? [];
+                    $pmList = [];
+                    if (is_array($pm)) {
+                        foreach ($pm as $v) {
+                            $vv = trim((string)$v);
+                            if ($vv !== '' && in_array($vv, $allowedPaymentMethods, true) && !in_array($vv, $pmList, true)) {
+                                $pmList[] = $vv;
+                            }
+                        }
+                    }
+                    $paymentMethodsJson = !empty($pmList) ? json_encode(array_values($pmList)) : null;
+
                     $logoPath = null;
                     if (isset($_FILES['logo_file'])) {
                         $logoPath = saveUploadedImage($_FILES['logo_file'], 'shops');
@@ -64,6 +78,7 @@ class ShopController {
                         'city' => $_POST['city'] ?? '',
                         'country' => $_POST['country'] ?? '',
                         'currency' => $_POST['currency'] ?? 'USD',
+                        'payment_methods_json' => $paymentMethodsJson,
                         'status' => $_POST['status'] ?? 'active'
                     ]);
 
@@ -227,6 +242,19 @@ class ShopController {
                         throw new Exception('Veuillez sélectionner une boutique.');
                     }
 
+                    $allowedPaymentMethods = ['orange_money', 'mpesa', 'airtel_money', 'crypto_usdt'];
+                    $pm = $_POST['payment_methods'] ?? [];
+                    $pmList = [];
+                    if (is_array($pm)) {
+                        foreach ($pm as $v) {
+                            $vv = trim((string)$v);
+                            if ($vv !== '' && in_array($vv, $allowedPaymentMethods, true) && !in_array($vv, $pmList, true)) {
+                                $pmList[] = $vv;
+                            }
+                        }
+                    }
+                    $paymentMethodsJson = !empty($pmList) ? json_encode(array_values($pmList)) : null;
+
                     $payload = [
                         'name' => $_POST['name'] ?? '',
                         'description' => $_POST['description'] ?? '',
@@ -236,6 +264,7 @@ class ShopController {
                         'city' => $_POST['city'] ?? '',
                         'country' => $_POST['country'] ?? '',
                         'currency' => $_POST['currency'] ?? 'USD',
+                        'payment_methods_json' => $paymentMethodsJson,
                         'status' => $_POST['status'] ?? 'active'
                     ];
 
@@ -290,6 +319,12 @@ class ShopController {
         $products = $activeShopId > 0 ? $productModel->getByShopId($activeShopId) : [];
         $orders = $activeShopId > 0 ? $orderModel->getByShopId($activeShopId) : [];
 
+        $notifications = [];
+        if ($tab === 'notifications' && $activeShopId > 0) {
+            $notificationModel = new Notification();
+            $notifications = $notificationModel->listForShop($activeShopId, 100);
+        }
+
         $editProduct = null;
         if ($tab === 'product_edit') {
             $pid = (int)($_GET['product_id'] ?? 0);
@@ -327,6 +362,7 @@ class ShopController {
             'active_shop' => $activeShop,
             'products' => $products,
             'orders' => $orders,
+            'notifications' => $notifications,
             'edit_product' => $editProduct,
             'overview' => [
                 'days' => $overviewDays,
@@ -363,6 +399,19 @@ class ShopController {
                 $_SESSION['view_data'] = $data;
             }
             return;
+        }
+
+        if ((string)($shop['status'] ?? 'active') === 'suspended') {
+            $until = $shop['suspended_until'] ?? null;
+            $ts = $until ? strtotime((string)$until) : null;
+            if ($ts !== null && $ts <= time()) {
+                getDB()->prepare('UPDATE shops SET status = "active", suspended_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?')->execute([$shopId]);
+                $shop = $shopModel->findById($shopId) ?: $shop;
+            } else {
+                http_response_code(403);
+                $_SESSION['view_data'] = ['title' => 'Boutique suspendue', 'shop' => null, 'products' => []];
+                return;
+            }
         }
 
         $products = $productModel->getActiveByShopIdPublic($shopId);
