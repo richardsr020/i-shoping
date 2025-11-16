@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FASHIONISTA BOUTIQUE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* === STYLES GÉNÉRAUX === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #fff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        /* === HEADER === */
+        header {
+            background-color: #000;
+            color: #fff;
+            padding: 15px 0;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: white; /* Logo en blanc */
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 500px;
+            margin: 0 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 20px;
+            border: none;
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icons i {
+            font-size: 20px;
+            cursor: pointer;
+            color: white; /* Icônes en blanc */
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .signin-btn {
+            background-color: #1e90ff;
+            color: white;
+        }
+
+        .register-btn {
+            background-color: #ff4500;
+            color: white;
+        }
+
+        /* === NAVIGATION PRINCIPALE === */
+        nav.main-nav {
+            background-color: #fff;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .nav-links a {
+            color: #333;
+            padding: 5px 10px;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: #ff4500;
+        }
+
+        /* === CONTENU PRINCIPAL === */
+        main {
+            padding: 30px 0;
+        }
+
+        /* Section Boutique */
+        .boutique-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .boutique-title {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .follow-btn {
+            background-color: #ffa500;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 20px;
+        }
+
+        /* Section À propos et Informations */
+        .boutique-info {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .about-us {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .about-us h2 {
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .about-us p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .view-more-btn {
+            background-color: transparent;
+            color: #333;
+            border: 1px solid #333;
+        }
+
+        .information {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .information h2 {
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .info-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .info-list i {
+            margin-right: 10px;
+            color: #ff4500;
+        }
+
+        .message-store-btn {
+            background-color: #ff4500;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        /* Section Produits */
+        .products-section {
+            margin-top: 40px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .product-actions i {
+            background-color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-price {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+
+        /* === FOOTER === */
+        footer {
+            background-color: #000;
+            color: #fff;
+            padding: 30px 0;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .social-icons i {
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .search-bar {
+                max-width: 100%;
+                margin: 10px 0;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .boutique-info {
+                grid-template-columns: 1fr;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- === HEADER === -->
+    <header>
+        <div class="container">
+            <div class="header-top">
+                <div class="logo">i shopping</div>
+                <div class="search-bar">
+                    <input type="text" placeholder="Rechercher des produits...">
+                </div>
+                <div class="header-icons">
+                    <i class="far fa-bell"></i>
+                    <i class="fas fa-shopping-cart"></i>
+                    <div class="auth-buttons">
+                        <button class="btn signin-btn">Sign in</button>
+                        <button class="btn register-btn">Register</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- === NAVIGATION PRINCIPALE === -->
+    <nav class="main-nav">
+        <div class="container">
+            <ul class="nav-links">
+                <li><a href="#">HOME</a></li>
+                <li><a href="#">Q search...</a></li>
+                <li><a href="#">Categories</a></li>
+                <li><a href="#">Price</a></li>
+                <li><a href="#">Brand</a></li>
+                <li><a href="#">Size</a></li>
+                <li><a href="#">NEW</a></li>
+                <li><a href="#">SALE</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- === CONTENU PRINCIPAL === -->
+    <main class="container">
+        <!-- Section Boutique -->
+        <section class="boutique-header">
+            <h1 class="boutique-title">FASHIONISTA BOUTIQUE</h1>
+            <button class="btn follow-btn" id="followBtn">Follow</button>
+        </section>
+
+        <!-- Section À propos et Informations -->
+        <section class="boutique-info">
+            <div class="about-us">
+                <h2>ABOUT US</h2>
+                <p>Yow deserabine neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit. There is no one who loves pain itself, who seeks after it and wants to have it, simply because it is pain.</p>
+                <button class="btn view-more-btn">View more...</button>
+            </div>
+
+            <div class="information">
+                <h2>INFORMATION</h2>
+                <ul class="info-list">
+                    <li><i class="fas fa-map-marker-alt"></i> Location</li>
+                    <li><i class="fas fa-phone"></i> Contact</li>
+                    <li><i class="far fa-clock"></i> Opening Hours</li>
+                    <li><i class="fas fa-shipping-fast"></i> Shipping</li>
+                    <li><i class="fas fa-undo"></i> Returns</li>
+                </ul>
+                <button class="btn message-store-btn">Message Store</button>
+            </div>
+        </section>
+
+        <!-- Section Produits -->
+        <section class="products-section">
+            <h2 class="section-title">PRODUCTS FROM THIS BOUTIQUE</h2>
+            <div class="products-grid">
+                <!-- Produit 1 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="T-shirt fashion">
+                    </div>
+                    <div class="product-actions">
+                        <i class="far fa-heart"></i>
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-price">$773.000</div>
+                    </div>
+                </div>
+
+                <!-- Produit 2 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1544441893-675973e31985?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Sac à main">
+                    </div>
+                    <div class="product-actions">
+                        <i class="far fa-heart"></i>
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-price">$773.000</div>
+                    </div>
+                </div>
+
+                <!-- Produit 3 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Robe élégante">
+                    </div>
+                    <div class="product-actions">
+                        <i class="far fa-heart"></i>
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-price">$773.000</div>
+                    </div>
+                </div>
+
+                <!-- Produit 4 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Chaussures de luxe">
+                    </div>
+                    <div class="product-actions">
+                        <i class="far fa-heart"></i>
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-price">$773.000</div>
+                    </div>
+                </div>
+
+                <!-- Produit 5 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Bijoux">
+                    </div>
+                    <div class="product-actions">
+                        <i class="far fa-heart"></i>
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-price">$773.000</div>
+                    </div>
+                </div>
+
+                <!-- Produit 6 -->
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80" alt="Veste en cuir">
+                    </div>
+                    <div class="product-actions">
+                        <i class="far fa-heart"></i>
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-price">$773.000</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- === FOOTER === -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="#">ABOUT US</a>
+                    <a href="#">CEBPOAISE EOBRICE</a>
+                </div>
+                <div class="social-icons">
+                    <span>FOLLOW UN</span>
+                    <i class="fab fa-facebook-f"></i>
+                    <i class="fab fa-twitter"></i>
+                    <i class="fab fa-instagram"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // === JAVASCRIPT ===
+        
+        // Effet de survol sur les cartes de produit
+        const productCards = document.querySelectorAll('.product-card');
+        
+        productCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.opacity = '0.9';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.opacity = '1';
+            });
+        });
+        
+        // Gestion du bouton "Follow"
+        const followBtn = document.getElementById('followBtn');
+        
+        followBtn.addEventListener('click', () => {
+            alert('Boutique suivie !');
+            // Optionnel: changer le texte du bouton après clic
+            followBtn.textContent = 'Suivi';
+            followBtn.style.backgroundColor = '#28a745';
+        });
+        
+        // Animation simple pour les icônes de coeur
+        const heartIcons = document.querySelectorAll('.fa-heart');
+        
+        heartIcons.forEach(icon => {
+            icon.addEventListener('click', function() {
+                this.classList.toggle('far');
+                this.classList.toggle('fas');
+                this.style.color = this.classList.contains('fas') ? '#ff4500' : '';
+            });
+        });
+    </script>
+</body>
+</html>
