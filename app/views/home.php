@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>i shopping - Votre boutique en ligne</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Variables CSS */
+        :root {
+            --primary-color:rgb(231, 128, 60);
+            --secondary-color: rgb(231, 128, 60);
+            --accent-color: #f1c40f;
+            --dark-color: #333;
+            --light-color: #f4f4f4;
+            --gray-color: #ddd;
+            --text-color: #333;
+            --white: #fff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-color);
+            padding-bottom: 60px; /* Pour éviter que le contenu ne soit caché par la navigation mobile */
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .logo span {
+            color: var(--primary-color);
+        }
+
+        .search-bar {
+            display: flex;
+            flex: 0 1 500px;
+            margin: 0 20px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            background-color: #f5f5f5;
+        }
+
+        .search-bar button {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            padding: 0 20px;
+            border-radius: 30px;
+            margin-left: 10px;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-signin {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .btn-register {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .icon-item {
+            position: relative;
+            font-size: 20px;
+            color: var(--dark-color);
+        }
+
+        .icon-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            font-size: 12px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Filtres */
+        .filters {
+            background-color: var(--white);
+            padding: 15px 0;
+            border-bottom: 1px solid var(--gray-color);
+        }
+
+        .filter-nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-nav a {
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: var(--transition);
+            background-color: #f5f5f5;
+            color: var(--dark-color);
+        }
+
+        .filter-nav a.active {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .filter-nav a:hover:not(.active) {
+            background-color: var(--gray-color);
+        }
+
+        /* Section principale */
+        .main-content {
+            padding: 30px 0;
+        }
+
+        .section-title {
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        /* Grille de produits */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .product-card {
+            background-color: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: var(--transition);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-name {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+        }
+
+        .btn-buy {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            width: 100%;
+            padding: 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-buy:hover {
+            background-color: #555;
+        }
+
+        .rating {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .star {
+            color: var(--gray-color);
+            margin-right: 2px;
+        }
+
+        .star.filled {
+            color: var(--accent-color);
+        }
+
+        /* Styles pour mobile */
+        .mobile-header {
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+
+        .hamburger {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            left: -100%;
+            width: 80%;
+            height: 100%;
+            background-color: var(--white);
+            z-index: 1000;
+            transition: var(--transition);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .mobile-nav.active {
+            left: 0;
+        }
+
+        .close-menu {
+            text-align: right;
+            margin-bottom: 20px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .mobile-nav ul li {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--gray-color);
+        }
+
+        .mobile-nav ul li:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--white);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .mobile-nav-item i {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .new-arrivals-mobile {
+            display: none;
+        }
+
+        /* Media Queries pour le responsive */
+        @media (max-width: 992px) {
+            .products-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-header, .filters {
+                display: none;
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .new-arrivals-mobile {
+                display: block;
+                margin-bottom: 30px;
+            }
+
+            .featured-product {
+                position: relative;
+                margin-bottom: 20px;
+            }
+
+            .featured-product img {
+                width: 100%;
+                height: 300px;
+                object-fit: cover;
+                border-radius: 12px;
+            }
+
+            .featured-info {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+                color: var(--white);
+                padding: 20px;
+                border-radius: 0 0 12px 12px;
+            }
+
+            .mobile-actions {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-bar {
+                display: none;
+            }
+            
+            .mobile-actions {
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .products-grid {
+                gap: 12px;
+            }
+            
+            .product-info {
+                padding: 12px;
+            }
+            
+            .product-name {
+                font-size: 15px;
+            }
+            
+            .section-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header pour desktop -->
+    <header>
+        <div class="container">
+            <div class="top-header">
+                <div class="logo">i <span>shopping</span></div>
+                <div class="search-bar">
+                    <input type="text" placeholder="Search here...">
+                    <button><i class="fas fa-search"></i></button>
+                </div>
+                <div class="user-actions">
+                    <button class="btn btn-signin">Sign in</button>
+                    <button class="btn btn-register">Register</button>
+                    <div class="header-icons">
+                        <div class="icon-item">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <div class="icon-item">
+                            <i class="fas fa-bell"></i>
+                            <span class="icon-count">5</span>
+                        </div>
+                        <div class="icon-item">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="icon-count">3</span>
+                        </div>
+                        <div class="icon-item">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filters">
+            <div class="container">
+                <div class="filter-nav">
+                    <a href="#">Categories</a>
+                    <a href="#">Price</a>
+                    <a href="#">Brand</a>
+                    <a href="#">Size</a>
+                    <a href="#">NEW</a>
+                    <a href="#">SALE</a>
+                    <a href="#" class="active">WOMEN</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Header pour mobile -->
+    <div class="mobile-header container">
+        <div class="hamburger">
+            <i class="fas fa-bars"></i>
+        </div>
+        <div class="logo">i <span>shopping</span></div>
+        <div class="mobile-actions">
+            <i class="fas fa-search" style="margin-right: 10px;"></i>
+            <div class="header-icons">
+                <div class="icon-item">
+                    <i class="fas fa-home"></i>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-bell"></i>
+                    <span class="icon-count">5</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="icon-count">3</span>
+                </div>
+                <div class="icon-item">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation mobile -->
+    <div class="mobile-nav">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <ul>
+            <li><a href="#">Categories</a></li>
+            <li><a href="#">Price</a></li>
+            <li><a href="#">Brand</a></li>
+            <li><a href="#">Size</a></li>
+            <li><a href="#">NEW</a></li>
+            <li><a href="#">SALE</a></li>
+            <li><a href="#">WOMEN</a></li>
+            <li><button class="btn btn-signin" style="width: 100%; margin-top: 10px;">Sign in</button></li>
+            <li><button class="btn btn-register" style="width: 100%;">Register</button></li>
+        </ul>
+    </div>
+
+    <!-- Contenu principal -->
+    <main class="main-content container">
+        <!-- Nouveautés pour mobile -->
+        <section class="new-arrivals-mobile">
+            <h2 class="section-title">NEW ARRIVALS</h2>
+            <div class="featured-product">
+                <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Classic Handbag">
+                <div class="featured-info">
+                    <h3>Classic Handbag</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$733 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grille de produits -->
+        <h2 class="section-title">OUR PRODUCTS</h2>
+        <div class="products-grid">
+            <!-- Produit 1 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Classic Handbag" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Classic Handbag</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$733 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+
+            <!-- Produit 2 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Running Shoes" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Running Shoes</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$775 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+
+            <!-- Produit 3 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Basic T-Shirt" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Basic T-Shirt</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$125 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+
+            <!-- Produit 4 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Designer Jeans" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Designer Jeans</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$450 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+
+            <!-- Produit 5 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1523170335258-f5ed11844a49?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Elegant Watch" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Elegant Watch</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$620 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+
+            <!-- Produit 6 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Summer Dress" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Summer Dress</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$380 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+
+            <!-- Produit 7 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Leather Jacket" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Leather Jacket</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$890 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+
+            <!-- Produit 8 -->
+            <div class="product-card">
+                <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Sport Backpack" class="product-image">
+                <div class="product-info">
+                    <h3 class="product-name">Sport Backpack</h3>
+                    <div class="rating">
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star filled"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                        <span class="star"><i class="fas fa-star"></i></span>
+                    </div>
+                    <p class="product-price">$240 000</p>
+                    <button class="btn-buy">BUY NOW!</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Menu hamburger pour mobile
+        document.querySelector('.hamburger').addEventListener('click', function() {
+            document.querySelector('.mobile-nav').classList.add('active');
+        });
+
+        document.querySelector('.close-menu').addEventListener('click', function() {
+            document.querySelector('.mobile-nav').classList.remove('active');
+        });
+
+        // Simulation d'ajout au panier
+        document.querySelectorAll('.btn-buy').forEach(button => {
+            button.addEventListener('click', function() {
+                const productName = this.closest('.product-card').querySelector('.product-name').textContent;
+                alert(`${productName} ajouté au panier!`);
+                
+                // Mise à jour du compteur de panier
+                const cartCount = document.querySelectorAll('.icon-count')[1];
+                let count = parseInt(cartCount.textContent);
+                count++;
+                cartCount.textContent = count;
+            });
+        });
+
+        // Fonction de recherche (icône seulement)
+        document.querySelectorAll('.fa-search').forEach(icon => {
+            icon.addEventListener('click', function() {
+                alert("Fonction de recherche - À implémenter");
+            });
+        });
+    </script>
+</body>
+</html>
