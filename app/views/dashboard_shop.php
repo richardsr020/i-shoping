@@ -1,10 +1,24 @@
+<?php
+$tab = $_SESSION['view_data']['tab'] ?? ($_GET['tab'] ?? 'overview');
+$allowedTabs = ['overview', 'shops', 'products', 'orders', 'settings', 'shop_create', 'product_create'];
+if (!in_array($tab, $allowedTabs, true)) {
+    $tab = 'overview';
+}
+
+$pageTitle = $_SESSION['view_data']['title'] ?? 'Tableau de bord boutique';
+$dashboardBaseUrl = url('dashboard_shop');
+$data = $_SESSION['view_data'] ?? [];
+$currentUser = $data['current_user'] ?? null;
+?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau de bord - FASHIONISTA BOUTIQUE</title>
+    <title><?php echo htmlspecialchars($pageTitle); ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/theme.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/pages.css">
     <style>
         /* === STYLES GÉNÉRAUX === */
         * {
@@ -480,13 +494,12 @@
             <h1>FASHIONISTA</h1>
         </div>
         <ul class="nav-links">
-            <li><a href="#" class="active"><i class="fas fa-home"></i> Tableau de bord</a></li>
-            <li><a href="#"><i class="fas fa-shopping-bag"></i> Produits</a></li>
-            <li><a href="#"><i class="fas fa-receipt"></i> Commandes</a></li>
-            <li><a href="#"><i class="fas fa-users"></i> Clients</a></li>
-            <li><a href="#"><i class="fas fa-chart-bar"></i> Analytics</a></li>
-            <li><a href="#"><i class="fas fa-tags"></i> Promotions</a></li>
-            <li><a href="#"><i class="fas fa-cog"></i> Paramètres</a></li>
+            <li><a href="<?php echo url('home'); ?>"><i class="fas fa-arrow-left"></i> Accueil</a></li>
+            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=overview" class="<?php echo $tab === 'overview' ? 'active' : ''; ?>"><i class="fas fa-home"></i> Tableau de bord</a></li>
+            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=shops" class="<?php echo $tab === 'shops' ? 'active' : ''; ?>"><i class="fas fa-store"></i> Mes boutiques</a></li>
+            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=products" class="<?php echo $tab === 'products' ? 'active' : ''; ?>"><i class="fas fa-shopping-bag"></i> Produits</a></li>
+            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=orders" class="<?php echo $tab === 'orders' ? 'active' : ''; ?>"><i class="fas fa-receipt"></i> Commandes</a></li>
+            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=settings" class="<?php echo $tab === 'settings' ? 'active' : ''; ?>"><i class="fas fa-cog"></i> Paramètres</a></li>
         </ul>
     </div>
 
@@ -498,14 +511,36 @@
                 <input type="text" placeholder="Rechercher...">
             </div>
             <div class="user-menu">
+                <button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème" style="margin-right: 10px;">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <div class="notifications">
                     <i class="far fa-bell"></i>
                 </div>
                 <div class="user-info">
-                    <div class="user-avatar">FB</div>
+                    <div class="user-avatar">
+                        <?php
+                        $initials = 'U';
+                        if (is_array($currentUser)) {
+                            $fn = trim((string)($currentUser['first_name'] ?? ''));
+                            $ln = trim((string)($currentUser['last_name'] ?? ''));
+                            $initials = strtoupper(substr($fn, 0, 1) . substr($ln, 0, 1));
+                            $initials = $initials !== '' ? $initials : 'U';
+                        }
+                        echo htmlspecialchars($initials);
+                        ?>
+                    </div>
                     <div>
-                        <div class="user-name">Fashionista Boutique</div>
-                        <div class="user-role">Administrateur</div>
+                        <div class="user-name">
+                            <?php
+                            if (is_array($currentUser)) {
+                                echo htmlspecialchars(trim((string)($currentUser['first_name'] ?? '') . ' ' . (string)($currentUser['last_name'] ?? '')));
+                            } else {
+                                echo 'Utilisateur';
+                            }
+                            ?>
+                        </div>
+                        <div class="user-role"><?php echo is_array($currentUser) ? htmlspecialchars((string)($currentUser['email'] ?? '')) : ''; ?></div>
                     </div>
                 </div>
             </div>
@@ -513,177 +548,19 @@
 
         <!-- Contenu du tableau de bord -->
         <div class="dashboard-content">
-            <!-- Bannière de bienvenue -->
-            <div class="welcome-banner">
-                <div class="welcome-text">
-                    <h2>Bon retour, Fashionista Boutique!</h2>
-                    <p>Voici un aperçu de votre activité aujourd'hui</p>
-                </div>
-                <button class="btn btn-primary">Créer une promotion</button>
-            </div>
-
-            <!-- Cartes de statistiques -->
-            <div class="stats-cards">
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <h3>Commandes</h3>
-                        <div class="stat-value">142</div>
-                        <div class="stat-change"><i class="fas fa-arrow-up"></i> 12% ce mois</div>
-                    </div>
-                    <div class="stat-icon orders">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <h3>Revenus</h3>
-                        <div class="stat-value">$9,284</div>
-                        <div class="stat-change"><i class="fas fa-arrow-up"></i> 8% ce mois</div>
-                    </div>
-                    <div class="stat-icon revenue">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <h3>Clients</h3>
-                        <div class="stat-value">1,248</div>
-                        <div class="stat-change"><i class="fas fa-arrow-up"></i> 5% ce mois</div>
-                    </div>
-                    <div class="stat-icon customers">
-                        <i class="fas fa-users"></i>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <h3>Produits</h3>
-                        <div class="stat-value">86</div>
-                        <div class="stat-change down"><i class="fas fa-arrow-down"></i> 2% ce mois</div>
-                    </div>
-                    <div class="stat-icon products">
-                        <i class="fas fa-box"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Grille principale -->
-            <div class="dashboard-grid">
-                <!-- Graphiques -->
-                <div class="chart-container">
-                    <div class="chart-header">
-                        <h3>Ventes des 30 derniers jours</h3>
-                        <select>
-                            <option>30 derniers jours</option>
-                            <option>7 derniers jours</option>
-                            <option>90 derniers jours</option>
-                        </select>
-                    </div>
-                    <div class="chart-placeholder">
-                        Graphique des ventes - Intégration avec une bibliothèque de graphiques
-                    </div>
-                </div>
-
-                <!-- Commandes récentes -->
-                <div class="recent-orders">
-                    <div class="orders-header">
-                        <h3>Commandes récentes</h3>
-                        <a href="#">Voir tout</a>
-                    </div>
-                    <table class="orders-table">
-                        <thead>
-                            <tr>
-                                <th>N° Commande</th>
-                                <th>Client</th>
-                                <th>Montant</th>
-                                <th>Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#ORD-7842</td>
-                                <td>Sophie Martin</td>
-                                <td>$247.00</td>
-                                <td><span class="status completed">Complétée</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-7841</td>
-                                <td>Thomas Bernard</td>
-                                <td>$189.50</td>
-                                <td><span class="status processing">En cours</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-7840</td>
-                                <td>Laura Petit</td>
-                                <td>$312.75</td>
-                                <td><span class="status pending">En attente</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-7839</td>
-                                <td>Marc Dubois</td>
-                                <td>$156.00</td>
-                                <td><span class="status completed">Complétée</span></td>
-                            </tr>
-                            <tr>
-                                <td>#ORD-7838</td>
-                                <td>Émilie Leroy</td>
-                                <td>$278.30</td>
-                                <td><span class="status completed">Complétée</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Actions rapides -->
-            <div class="quick-actions">
-                <div class="action-card">
-                    <div class="action-icon">
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <h4>Ajouter un produit</h4>
-                    <p>Créez une nouvelle fiche produit pour votre boutique</p>
-                    <button class="btn btn-primary">Commencer</button>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h4>Rapport de performance</h4>
-                    <p>Générez un rapport détaillé de vos performances</p>
-                    <button class="btn btn-secondary">Générer</button>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">
-                        <i class="fas fa-bullhorn"></i>
-                    </div>
-                    <h4>Campagne marketing</h4>
-                    <p>Lancez une nouvelle campagne promotionnelle</p>
-                    <button class="btn btn-primary">Créer</button>
-                </div>
-                <div class="action-card">
-                    <div class="action-icon">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <h4>Paramètres boutique</h4>
-                    <p>Modifiez les paramètres de votre boutique en ligne</p>
-                    <button class="btn btn-secondary">Configurer</button>
-                </div>
-            </div>
+            <?php
+            $tabPath = __DIR__ . '/dashboard_shop/' . $tab . '.php';
+            if (file_exists($tabPath)) {
+                require $tabPath;
+            }
+            ?>
         </div>
     </div>
 
+    <script src="<?php echo BASE_URL; ?>/public/js/theme.js"></script>
     <script>
         // Script pour le tableau de bord
         document.addEventListener('DOMContentLoaded', function() {
-            // Gestion des liens actifs dans la sidebar
-            const navLinks = document.querySelectorAll('.nav-links a');
-            navLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    this.classList.add('active');
-                });
-            });
-
             // Simulation de données pour les cartes de statistiques
             function updateStats() {
                 // Dans une application réelle, on récupérerait ces données via une API

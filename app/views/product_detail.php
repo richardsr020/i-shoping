@@ -1,3 +1,169 @@
+<?php
+require_once __DIR__ . '/../config.php';
+
+$data = $_SESSION['view_data'] ?? [];
+$product = $data['product'] ?? null;
+$images = $data['images'] ?? [];
+$variants = $data['variants'] ?? [];
+
+if (!$product) {
+    echo '<main class="main-content container"><h2>Produit introuvable</h2></main>';
+    return;
+}
+
+$mainImage = $product['image'] ?? null;
+if ((!$mainImage || $mainImage === '') && !empty($images)) {
+    $mainImage = $images[0]['image'] ?? null;
+}
+
+$price = (float)($product['price'] ?? 0);
+$promo = (float)($product['promo_price'] ?? 0);
+$hasPromo = $promo > 0 && $promo < $price;
+?>
+
+<style>
+    .pd-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--spacing-2xl); align-items: start; }
+    @media (max-width: 900px) { .pd-grid { grid-template-columns: 1fr; } }
+</style>
+
+<main class="main-content container" style="padding-top: var(--spacing-lg);">
+    <div style="margin-bottom: var(--spacing-lg);">
+        <a href="<?php echo url('home'); ?>" class="btn btn-ghost btn-sm">Retour</a>
+    </div>
+
+    <div class="pd-grid">
+        <div>
+            <div style="border-radius: var(--radius-lg); overflow:hidden; background: var(--color-bg-secondary); box-shadow: var(--shadow-md);">
+                <?php if (!empty($mainImage)): ?>
+                    <img id="pd-main-image" src="<?php echo htmlspecialchars((string)$mainImage); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" style="width:100%; height:520px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
+                <?php else: ?>
+                    <div style="height:520px; display:flex; align-items:center; justify-content:center; color: var(--color-text-muted);">Aucune image</div>
+                <?php endif; ?>
+            </div>
+
+            <div style="display:flex; gap: 10px; margin-top: var(--spacing-lg); flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" onclick="pdCreateOrder(<?php echo (int)$product['id']; ?>)">Ajouter au panier</button>
+                <a class="btn btn-ghost" href="<?php echo url('profile_shop'); ?>&id=<?php echo (int)($product['shop_id'] ?? 0); ?>">Voir la boutique</a>
+            </div>
+
+            <?php if (!empty($images)): ?>
+                <div style="display:flex; gap:10px; margin-top: var(--spacing-md); overflow-x:auto; padding-bottom:6px;">
+                    <?php foreach ($images as $img): ?>
+                        <?php if (empty($img['image'])) continue; ?>
+                        <button type="button" style="border: 1px solid rgba(0,0,0,0.08); background: var(--color-bg); padding:0; border-radius:12px; overflow:hidden; width:78px; height:78px; flex:0 0 auto; cursor:pointer;" onclick="document.getElementById('pd-main-image').src='<?php echo htmlspecialchars((string)$img['image']); ?>'">
+                            <img src="<?php echo htmlspecialchars((string)$img['image']); ?>" alt="" style="width:78px; height:78px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div>
+            <h1 style="margin:0 0 var(--spacing-sm) 0; font-size:32px; line-height:1.15;"><?php echo htmlspecialchars((string)$product['name']); ?></h1>
+            <div style="color: var(--color-text-muted); margin-bottom: var(--spacing-md);">
+                Boutique:
+                <a href="<?php echo url('profile_shop'); ?>&id=<?php echo (int)($product['shop_id'] ?? 0); ?>" style="color: var(--color-primary); font-weight: 800;">
+                    <?php echo htmlspecialchars((string)($product['shop_name'] ?? '')); ?>
+                </a>
+            </div>
+
+            <?php if (!empty($product['shop_email_contact']) || !empty($product['shop_phone'])): ?>
+                <div style="display:flex; gap: 12px; flex-wrap: wrap; align-items:center; color: var(--color-text-muted); font-size: 14px; margin-bottom: var(--spacing-md);">
+                    <?php if (!empty($product['shop_email_contact'])): ?>
+                        <div>Email: <strong><?php echo htmlspecialchars((string)$product['shop_email_contact']); ?></strong></div>
+                    <?php endif; ?>
+                    <?php if (!empty($product['shop_phone'])): ?>
+                        <div>Tél: <strong><?php echo htmlspecialchars((string)$product['shop_phone']); ?></strong></div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+
+            <div style="display:flex; align-items:baseline; gap:10px; margin: var(--spacing-md) 0 var(--spacing-lg) 0;">
+                <div style="font-size:30px; font-weight:900; color: var(--color-primary);">
+                    <?php echo htmlspecialchars(number_format($hasPromo ? $promo : $price, 0, ',', ' ')); ?> XOF
+                </div>
+                <?php if ($hasPromo): ?>
+                    <div style="font-size:14px; color: var(--color-text-muted); text-decoration: line-through;">
+                        <?php echo htmlspecialchars(number_format($price, 0, ',', ' ')); ?> XOF
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <?php if (!empty($product['description'])): ?>
+                <div style="color: var(--color-text); line-height:1.8; margin-bottom: var(--spacing-lg);">
+                    <?php echo nl2br(htmlspecialchars((string)$product['description'])); ?>
+                </div>
+            <?php endif; ?>
+
+            <div style="display:grid; gap:10px; background: var(--color-bg); border: 1px solid rgba(0,0,0,0.08); border-radius: var(--radius-lg); padding: var(--spacing-md);">
+                <?php if (!empty($product['category'])): ?>
+                    <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color: var(--color-text-muted);">Catégorie</span><strong><?php echo htmlspecialchars((string)$product['category']); ?></strong></div>
+                <?php endif; ?>
+                <?php if (!empty($product['brand'])): ?>
+                    <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color: var(--color-text-muted);">Marque</span><strong><?php echo htmlspecialchars((string)$product['brand']); ?></strong></div>
+                <?php endif; ?>
+                <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color: var(--color-text-muted);">Stock</span><strong><?php echo (int)($product['stock'] ?? 0); ?></strong></div>
+            </div>
+
+            <?php if (!empty($variants)): ?>
+                <div style="margin-top: var(--spacing-xl);">
+                    <div style="font-weight:800; margin-bottom:10px;">Variantes</div>
+                    <div style="display:grid; gap:10px;">
+                        <?php foreach ($variants as $v): ?>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px; border: 1px solid rgba(0,0,0,0.08); border-radius:12px; background: var(--color-bg);">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <?php if (!empty($v['color_hex'])): ?>
+                                        <span style="width:16px; height:16px; border-radius:50%; background: <?php echo htmlspecialchars((string)$v['color_hex']); ?>; border: 1px solid rgba(0,0,0,0.15);"></span>
+                                    <?php endif; ?>
+                                    <div>
+                                        <div style="font-weight:700;"><?php echo htmlspecialchars((string)($v['variant_name'] ?? 'Variante')); ?></div>
+                                        <div style="font-size:12px; color: var(--color-text-muted);">Stock: <?php echo (int)($v['stock'] ?? 0); ?></div>
+                                    </div>
+                                </div>
+                                <?php if (!empty($v['additional_price']) && (float)$v['additional_price'] != 0.0): ?>
+                                    <div style="font-weight:800; color: var(--color-primary);">+<?php echo htmlspecialchars(number_format((float)$v['additional_price'], 0, ',', ' ')); ?> XOF</div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</main>
+
+<script>
+    window.BASE_URL = '<?php echo BASE_URL; ?>';
+
+    async function pdCreateOrder(productId) {
+        try {
+            const res = await fetch(`${window.BASE_URL}/api/create_order.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            });
+
+            if (res.status === 401) {
+                window.location.href = `${window.BASE_URL}/index.php?page=login`;
+                return;
+            }
+
+            const data = await res.json();
+            if (data && data.success) {
+                alert(`Commande #${data.order_id} créée`);
+                return;
+            }
+
+            alert((data && data.error) ? data.error : 'Erreur lors de la création de la commande');
+        } catch (e) {
+            console.error(e);
+            alert('Erreur réseau');
+        }
+    }
+</script>
+
+<?php return; ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>

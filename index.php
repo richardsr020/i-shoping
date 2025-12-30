@@ -1,64 +1,58 @@
 <?php
-// i-shoping/index.php
+/**
+ * Point d'entrée unique de l'application
+ * Toutes les pages doivent passer par ce fichier via index.php?page=nom_page
+ */
 
-// Démarrer la session
-session_start();
+// Inclure la configuration (démarre la session)
+require_once __DIR__ . '/app/config.php';
 
-// Déterminer la page demandée
-$page = isset($_GET['page']) ? $_GET['page'] : 'home';
+// Obtenir la page demandée
+$page = $_GET['page'] ?? 'home';
+$action = $_GET['action'] ?? null;
 
-// Inclure l'en-tête
-require_once __DIR__ . '/app/views/header.php';
+// Routes qui ont leurs propres templates HTML complets (pas de header/footer commun)
+$fullPageRoutes = ['login', 'register', 'dashboard_shop'];
 
-// Charger la page demandée
-switch($page) {
-    case 'home':
-        require_once __DIR__ . '/app/views/home.php';
-        break;
-        
-    case 'login':
-        require_once __DIR__ . '/app/views/login.php';
-        break;
-        
-    case 'register':
-        require_once __DIR__ . '/app/views/register.php';
-        break;
-        
-    case 'create_shop':
-        require_once __DIR__ . '/app/views/create_shop.php';
-        break;
-        
-    case 'dashboard_shop':
-        require_once __DIR__ . '/app/views/dashboard_shop.php';
-        break;
-        
-    case 'profile_shop':
-        require_once __DIR__ . '/app/views/profile_shop.php';
-        break;
-    case 'dashboard_admin':
-        require_once __DIR__ . '/app/views/dashboard_admin.php';
-        break;
-    case 'create_product':
-        require_once __DIR__ . '/app/views/create_product.php';
-        break;
-        
-    case 'product_detail':
-        require_once __DIR__ . '/app/views/product_detail.php';
-        break;
+// Si c'est une route avec template complet, charger directement la vue après le contrôleur
+if (in_array($page, $fullPageRoutes)) {
+    // Charger le routeur et exécuter la route
+    require_once __DIR__ . '/app/router.php';
+    $router = new Router();
+    $router->route();
     
-    case 'chat':
-        require_once __DIR__ . '/app/views/chat.php';
-        break;
-        
-    default:
-        // Page non trouvée
-        echo '<div class="container">';
-        echo '<h1>404 - Page non trouvée</h1>';
-        echo '<p>La page que vous recherchez n\'existe pas.</p>';
-        echo '</div>';
-        break;
+    // Si le contrôleur n'a pas redirigé, charger la vue
+    // (les vues login.php et register.php ont leur propre structure HTML complète)
+    if ($page === 'login') {
+        require_once __DIR__ . '/app/views/login.php';
+    } elseif ($page === 'register') {
+        require_once __DIR__ . '/app/views/register.php';
+    } elseif ($page === 'dashboard_shop') {
+        require_once __DIR__ . '/app/views/dashboard_shop.php';
+    }
+    exit;
+}
+
+// Pour les autres routes, inclure header/view/footer
+$headerPath = __DIR__ . '/app/views/header.php';
+if (file_exists($headerPath)) {
+    require_once $headerPath;
+}
+
+// Router la requête
+require_once __DIR__ . '/app/router.php';
+$router = new Router();
+$router->route();
+
+// Charger la vue correspondante
+$viewPath = __DIR__ . '/app/views/' . $page . '.php';
+if (file_exists($viewPath)) {
+    require_once $viewPath;
 }
 
 // Inclure le pied de page
-require_once __DIR__ . '/app/views/footer.php';
+$footerPath = __DIR__ . '/app/views/footer.php';
+if (file_exists($footerPath)) {
+    require_once $footerPath;
+}
 ?>
