@@ -40,7 +40,7 @@ $canCreateShop = empty($shops);
     <?php else: ?>
         <div style="display: grid; gap: 10px;">
             <?php foreach ($shops as $shop): ?>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; border: 1px solid #eee; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--dashboard-border); border-radius: 8px;">
                     <div>
                         <div style="font-weight: 700;">
                             <?php echo htmlspecialchars($shop['name']); ?>

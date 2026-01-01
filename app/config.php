@@ -241,7 +241,8 @@ function initDatabase($db) {
         'weight' => 'REAL',
         'colors_json' => 'TEXT',
         'tags_json' => 'TEXT',
-        'is_physical' => 'INTEGER DEFAULT 1'
+        'is_physical' => 'INTEGER DEFAULT 1',
+        'min_order_qty' => 'INTEGER DEFAULT 1'
     ]);
 
     $ensureColumns('orders', [

@@ -112,6 +112,7 @@ class ShopController {
                         'description' => $_POST['description'] ?? '',
                         'price' => $_POST['price'] ?? 0,
                         'promo_price' => $_POST['promo_price'] ?? null,
+                        'min_order_qty' => $_POST['min_order_qty'] ?? 1,
                         'category' => $_POST['category'] ?? '',
                         'brand' => $_POST['brand'] ?? '',
                         'size' => $_POST['size'] ?? '',
@@ -192,6 +193,34 @@ class ShopController {
                     redirect('dashboard_shop&tab=products');
                 }
 
+                if ($action === 'update_product') {
+                    $shopId = (int)($_SESSION['active_shop_id'] ?? 0);
+                    if ($shopId <= 0) {
+                        throw new Exception('Veuillez sélectionner une boutique.');
+                    }
+
+                    $productId = (int)($_GET['product_id'] ?? ($_POST['product_id'] ?? 0));
+                    if ($productId <= 0) {
+                        throw new Exception('Produit introuvable.');
+                    }
+
+                    $productModel->update($productId, (int)$_SESSION['user_id'], [
+                        'name' => $_POST['name'] ?? '',
+                        'description' => $_POST['description'] ?? '',
+                        'price' => $_POST['price'] ?? 0,
+                        'promo_price' => $_POST['promo_price'] ?? null,
+                        'min_order_qty' => $_POST['min_order_qty'] ?? 1,
+                        'category' => $_POST['category'] ?? '',
+                        'brand' => $_POST['brand'] ?? '',
+                        'size' => $_POST['size'] ?? '',
+                        'sku' => $_POST['sku'] ?? '',
+                        'stock' => $_POST['stock'] ?? 0,
+                        'status' => $_POST['status'] ?? 'active',
+                    ]);
+
+                    redirect('dashboard_shop&tab=products');
+                }
+
                 if ($action === 'update_shop') {
                     $shopId = (int)($_SESSION['active_shop_id'] ?? 0);
                     if ($shopId <= 0) {
@@ -261,6 +290,33 @@ class ShopController {
         $products = $activeShopId > 0 ? $productModel->getByShopId($activeShopId) : [];
         $orders = $activeShopId > 0 ? $orderModel->getByShopId($activeShopId) : [];
 
+        $editProduct = null;
+        if ($tab === 'product_edit') {
+            $pid = (int)($_GET['product_id'] ?? 0);
+            if ($pid > 0) {
+                $editProduct = $productModel->findOwnedByUser($pid, (int)$_SESSION['user_id']);
+                if ($editProduct && $activeShopId > 0 && (int)($editProduct['shop_id'] ?? 0) !== $activeShopId) {
+                    $editProduct = null;
+                }
+            }
+        }
+
+        $overviewDays = (int)($_GET['days'] ?? 30);
+        if (!in_array($overviewDays, [7, 30, 90], true)) {
+            $overviewDays = 30;
+        }
+        $overviewOrderStatus = isset($_GET['order_status']) ? trim((string)$_GET['order_status']) : 'all';
+
+        $kpis = $activeShopId > 0 ? $orderModel->getKpisByShopId($activeShopId) : [
+            'orders_count' => 0,
+            'revenue_total' => 0.0,
+            'customers_count' => 0,
+        ];
+        $productsCount = is_array($products) ? count($products) : 0;
+
+        $salesByDay = $activeShopId > 0 ? $orderModel->getSalesByDay($activeShopId, $overviewDays, true) : [];
+        $recentOrders = $activeShopId > 0 ? $orderModel->getRecentByShopId($activeShopId, 5, $overviewOrderStatus) : [];
+
         $currentUser = getCurrentUser();
 
         $data = [
@@ -271,6 +327,15 @@ class ShopController {
             'active_shop' => $activeShop,
             'products' => $products,
             'orders' => $orders,
+            'edit_product' => $editProduct,
+            'overview' => [
+                'days' => $overviewDays,
+                'order_status' => $overviewOrderStatus,
+                'kpis' => $kpis,
+                'products_count' => $productsCount,
+                'sales_by_day' => $salesByDay,
+                'recent_orders' => $recentOrders,
+            ],
             'current_user' => $currentUser,
             'error' => $_SESSION['dashboard_error'] ?? null
         ];

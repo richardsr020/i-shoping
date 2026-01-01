@@ -1,6 +1,6 @@
 <?php
 $tab = $_SESSION['view_data']['tab'] ?? ($_GET['tab'] ?? 'overview');
-$allowedTabs = ['overview', 'shops', 'products', 'orders', 'settings', 'shop_create', 'product_create'];
+$allowedTabs = ['overview', 'shops', 'products', 'orders', 'settings', 'shop_create', 'product_create', 'product_edit'];
 if (!in_array($tab, $allowedTabs, true)) {
     $tab = 'overview';
 }
@@ -9,6 +9,8 @@ $pageTitle = $_SESSION['view_data']['title'] ?? 'Tableau de bord boutique';
 $dashboardBaseUrl = url('dashboard_shop');
 $data = $_SESSION['view_data'] ?? [];
 $currentUser = $data['current_user'] ?? null;
+$activeShop = $data['active_shop'] ?? null;
+$activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string)$activeShop['name'] : 'i shopping';
 ?>
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
@@ -29,20 +31,27 @@ $currentUser = $data['current_user'] ?? null;
         }
 
         :root {
-            --primary: #ff4500;
-            --primary-dark: #e03d00;
-            --secondary: #1e90ff;
-            --dark: #000;
-            --light: #fff;
-            --gray: #f8f9fa;
-            --gray-dark: #6c757d;
+            --primary: var(--color-primary);
+            --primary-dark: var(--color-primary-dark);
+            --secondary: var(--color-primary);
+            --dark: var(--color-black);
+            --light: var(--color-white);
+            --gray: var(--color-bg-secondary);
+            --gray-dark: var(--color-text-muted);
             --success: #28a745;
             --warning: #ffc107;
+            --dashboard-surface: var(--color-bg);
+            --dashboard-surface-2: var(--color-bg-secondary);
+            --dashboard-border: rgba(0, 0, 0, 0.12);
+        }
+
+        [data-theme="dark"] {
+            --dashboard-border: rgba(255, 255, 255, 0.14);
         }
 
         body {
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: var(--dashboard-surface-2);
+            color: var(--color-text);
             line-height: 1.6;
             display: flex;
             min-height: 100vh;
@@ -78,9 +87,9 @@ $currentUser = $data['current_user'] ?? null;
         }
 
         .card {
-            background: white;
+            background: var(--dashboard-surface);
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-md);
             padding: 20px;
             margin-bottom: 20px;
         }
@@ -96,7 +105,7 @@ $currentUser = $data['current_user'] ?? null;
 
         .logo {
             padding: 0 20px 20px;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--dashboard-border);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -124,13 +133,13 @@ $currentUser = $data['current_user'] ?? null;
             display: flex;
             align-items: center;
             padding: 12px 20px;
-            color: #ccc;
+            color: var(--color-text-muted);
             transition: all 0.3s;
         }
 
         .nav-links a:hover, .nav-links a.active {
-            background-color: #333;
-            color: white;
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-text);
             border-left: 4px solid var(--primary);
         }
 
@@ -149,12 +158,12 @@ $currentUser = $data['current_user'] ?? null;
 
         /* Header */
         .top-header {
-            background-color: white;
+            background-color: var(--dashboard-surface);
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-sm);
         }
 
         .search-bar {
@@ -167,7 +176,9 @@ $currentUser = $data['current_user'] ?? null;
             width: 100%;
             padding: 10px 15px;
             border-radius: 20px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--dashboard-border);
+            background: var(--dashboard-surface);
+            color: var(--color-text);
         }
 
         .user-menu {
@@ -201,7 +212,7 @@ $currentUser = $data['current_user'] ?? null;
         }
 
         .welcome-banner {
-            background: linear-gradient(135deg, var(--primary), #ff6b35);
+            background: linear-gradient(135deg, var(--primary), var(--color-primary-light));
             color: white;
             border-radius: 8px;
             padding: 25px;
@@ -224,10 +235,10 @@ $currentUser = $data['current_user'] ?? null;
         }
 
         .stat-card {
-            background: white;
+            background: var(--dashboard-surface);
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-md);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -293,10 +304,10 @@ $currentUser = $data['current_user'] ?? null;
         }
 
         .chart-container {
-            background: white;
+            background: var(--dashboard-surface);
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-md);
         }
 
         .chart-header {
@@ -312,19 +323,21 @@ $currentUser = $data['current_user'] ?? null;
 
         .chart-placeholder {
             height: 300px;
-            background-color: #f8f9fa;
+            background-color: var(--dashboard-surface-2);
             border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
+            text-align: center;
+            padding: 20px;
         }
 
         .recent-orders {
-            background: white;
+            background: var(--dashboard-surface);
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-md);
         }
 
         .orders-header {
@@ -346,7 +359,7 @@ $currentUser = $data['current_user'] ?? null;
         .orders-table th, .orders-table td {
             padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--dashboard-border);
         }
 
         .orders-table th {
@@ -385,10 +398,10 @@ $currentUser = $data['current_user'] ?? null;
         }
 
         .action-card {
-            background: white;
+            background: var(--dashboard-surface);
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-md);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -491,7 +504,7 @@ $currentUser = $data['current_user'] ?? null;
     <div class="sidebar">
         <div class="logo">
             <i class="fas fa-crown"></i>
-            <h1>FASHIONISTA</h1>
+            <h1><?php echo htmlspecialchars($activeShopName); ?></h1>
         </div>
         <ul class="nav-links">
             <li><a href="<?php echo url('home'); ?>"><i class="fas fa-arrow-left"></i> Accueil</a></li>
@@ -507,9 +520,6 @@ $currentUser = $data['current_user'] ?? null;
     <div class="main-content">
         <!-- Header -->
         <header class="top-header">
-            <div class="search-bar">
-                <input type="text" placeholder="Rechercher...">
-            </div>
             <div class="user-menu">
                 <button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème" style="margin-right: 10px;">
                     <i class="fas fa-moon"></i>
@@ -558,44 +568,6 @@ $currentUser = $data['current_user'] ?? null;
     </div>
 
     <script src="<?php echo BASE_URL; ?>/public/js/theme.js"></script>
-    <script>
-        // Script pour le tableau de bord
-        document.addEventListener('DOMContentLoaded', function() {
-            // Simulation de données pour les cartes de statistiques
-            function updateStats() {
-                // Dans une application réelle, on récupérerait ces données via une API
-                const stats = [
-                    { id: 'orders', value: 142, change: 12 },
-                    { id: 'revenue', value: 9284, change: 8 },
-                    { id: 'customers', value: 1248, change: 5 },
-                    { id: 'products', value: 86, change: -2 }
-                ];
-
-                stats.forEach(stat => {
-                    const valueElement = document.querySelector(`.stat-card:nth-child(${stats.indexOf(stat)+1}) .stat-value`);
-                    const changeElement = document.querySelector(`.stat-card:nth-child(${stats.indexOf(stat)+1}) .stat-change`);
-                    
-                    if (valueElement) {
-                        valueElement.textContent = stat.id === 'revenue' ? `$${stat.value.toLocaleString()}` : stat.value;
-                    }
-                    
-                    if (changeElement) {
-                        changeElement.innerHTML = stat.change > 0 
-                            ? `<i class="fas fa-arrow-up"></i> ${stat.change}% ce mois`
-                            : `<i class="fas fa-arrow-down"></i> ${Math.abs(stat.change)}% ce mois`;
-                        
-                        if (stat.change < 0) {
-                            changeElement.classList.add('down');
-                        } else {
-                            changeElement.classList.remove('down');
-                        }
-                    }
-                });
-            }
-
-            // Mettre à jour les statistiques toutes les 30 secondes (simulation)
-            setInterval(updateStats, 30000);
-        });
-    </script>
+    <script></script>
 </body>
 </html>

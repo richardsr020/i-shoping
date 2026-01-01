@@ -21,9 +21,45 @@ class HomePage {
     
     init() {
         this.initFloatingMenu();
+        this.initSearchBar();
         this.loadProducts();
         this.updateCartBadge();
         this.updateNotificationBadge();
+    }
+
+    initSearchBar() {
+        const input = document.getElementById('home-search-input');
+        const button = document.getElementById('home-search-button');
+
+        if (!input) return;
+
+        let timer = null;
+        const apply = () => {
+            const q = (input.value || '').trim();
+            this.filters.search = q !== '' ? q : null;
+            this.loadProducts();
+        };
+
+        input.addEventListener('input', () => {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(apply, 350);
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (timer) clearTimeout(timer);
+                apply();
+            }
+        });
+
+        if (button) {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (timer) clearTimeout(timer);
+                apply();
+            });
+        }
     }
     
     // ============================================
@@ -62,7 +98,7 @@ class HomePage {
         });
         
         document.getElementById('menu-cart').addEventListener('click', () => {
-            this.openCartModal();
+            window.location.href = `${window.BASE_URL}/index.php?page=orders`;
         });
         
         document.getElementById('menu-filters').addEventListener('click', () => {
@@ -116,6 +152,8 @@ class HomePage {
             const price = Number(product.price || 0);
             const promo = Number(product.promo_price || 0);
             const hasPromo = promo > 0 && promo < price;
+            const currency = (product.shop_currency || 'XOF');
+            const minOrderQty = Math.max(1, parseInt(product.min_order_qty || '1', 10) || 1);
             const viewUrl = `${window.BASE_URL}/index.php?page=product_detail&id=${product.id}`;
             const img = this.resolveImage(product.image);
             const starsPercent = Number(product.shop_stars || 0);
@@ -135,9 +173,14 @@ class HomePage {
                         ${starsHtml}
                         <h3 class="product-name" title="${this.escapeHtml(product.name)}">${this.escapeHtml(product.name)}</h3>
                         <p class="text-muted" style="font-size: 14px; margin-bottom: var(--spacing-xs);">${this.escapeHtml(product.shop_name || '')}</p>
+                        <p class="text-muted" style="font-size: 12px; margin-bottom: var(--spacing-xs);">
+                            <span style="font-weight: 800;">Min:</span> ${minOrderQty}
+                            <span style="margin-left: 8px;">•</span>
+                            <span style="margin-left: 8px;">Prix: par unité</span>
+                        </p>
                         <div class="product-price-row">
-                            <span class="product-price-regular">${this.formatPrice(hasPromo ? promo : price)}</span>
-                            ${hasPromo ? `<span class="product-price-old">${this.formatPrice(price)}</span>` : ``}
+                            <span class="product-price-regular">${this.formatPrice(hasPromo ? promo : price, currency)}</span>
+                            ${hasPromo ? `<span class="product-price-old">${this.formatPrice(price, currency)}</span>` : ``}
                         </div>
                         <div class="product-cta-row">
                             <a class="btn btn-cta-discreet" href="${viewUrl}">Voir</a>
@@ -165,11 +208,13 @@ class HomePage {
         const product = this.products.find(p => p.id === productId);
         if (!product) return;
 
+        const minOrderQty = Math.max(1, parseInt(product.min_order_qty || '1', 10) || 1);
+
         try {
             const res = await fetch(`${window.BASE_URL}/api/create_order.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ product_id: productId, quantity: 1 })
+                body: JSON.stringify({ product_id: productId, quantity: minOrderQty })
             });
 
             if (res.status === 401) {
@@ -188,7 +233,7 @@ class HomePage {
 
         const cartItem = this.cart.find(item => item.id === productId);
         if (cartItem) {
-            cartItem.quantity += 1;
+            cartItem.quantity += minOrderQty;
         } else {
             this.cart.push({
                 id: product.id,
@@ -196,7 +241,7 @@ class HomePage {
                 price: product.price,
                 image: product.image,
                 shop_name: product.shop_name,
-                quantity: 1
+                quantity: minOrderQty
             });
         }
 
@@ -432,11 +477,17 @@ class HomePage {
         return `${window.BASE_URL}/${imagePath}`;
     }
     
-    formatPrice(price) {
-        return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'XOF'
-        }).format(price);
+    formatPrice(price, currency = 'XOF') {
+        let cur = (currency || 'XOF').toString().trim().toUpperCase();
+        if (cur === '') cur = 'XOF';
+        try {
+            return new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: cur
+            }).format(Number(price || 0));
+        } catch (e) {
+            return `${Number(price || 0).toLocaleString('fr-FR')} ${cur}`;
+        }
     }
     
     formatTime(timeString) {

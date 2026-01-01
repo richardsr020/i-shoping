@@ -24,11 +24,11 @@ $error = $data['error'] ?? null;
         <form method="post" enctype="multipart/form-data" action="<?php echo url('dashboard_shop'); ?>&tab=settings&action=update_shop" style="display: grid; gap: 15px; max-width: 520px;">
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 6px;">Nom de la boutique</label>
-                <input name="name" type="text" required style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" value="<?php echo htmlspecialchars($activeShop['name']); ?>" />
+                <input name="name" type="text" required style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--dashboard-border); background: var(--dashboard-surface); color: var(--color-text);" value="<?php echo htmlspecialchars($activeShop['name']); ?>" />
             </div>
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 6px;">Description</label>
-                <textarea name="description" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd; min-height: 100px;" placeholder="Description..."><?php echo htmlspecialchars((string)($activeShop['description'] ?? '')); ?></textarea>
+                <textarea name="description" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--dashboard-border); background: var(--dashboard-surface); color: var(--color-text); min-height: 100px;" placeholder="Description..."><?php echo htmlspecialchars((string)($activeShop['description'] ?? '')); ?></textarea>
             </div>
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 6px;">Logo</label>

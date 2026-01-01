@@ -35,9 +35,9 @@ $error = $data['error'] ?? null;
     <?php else: ?>
         <div style="display: grid; gap: 10px;">
             <?php foreach ($products as $product): ?>
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; border: 1px solid #eee; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--dashboard-border); border-radius: 8px;">
                     <div style="display: flex; gap: 12px; align-items: center;">
-                        <div style="width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: #f3f3f3; flex: 0 0 56px;">
+                        <div style="width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: var(--dashboard-surface-2); flex: 0 0 56px;">
                             <?php if (!empty($product['image'])): ?>
                                 <img src="<?php echo htmlspecialchars((string)$product['image']); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" style="width: 56px; height: 56px; object-fit: cover;" onerror="this.style.display='none'" />
                             <?php endif; ?>
@@ -69,6 +69,7 @@ $error = $data['error'] ?? null;
                     </div>
 
                     <div style="display: flex; gap: 8px; align-items: center;">
+                        <a class="btn btn-secondary" href="<?php echo url('dashboard_shop'); ?>&tab=product_edit&product_id=<?php echo (int)$product['id']; ?>">Modifier</a>
                         <form method="post" action="<?php echo url('dashboard_shop'); ?>&tab=products&action=delete_product" style="margin: 0;" onsubmit="return confirm('Supprimer ce produit ?');">
                             <input type="hidden" name="product_id" value="<?php echo (int)$product['id']; ?>" />
                             <button class="btn btn-primary" type="submit">Supprimer</button>

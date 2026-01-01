@@ -5,6 +5,8 @@ $data = $_SESSION['view_data'] ?? [];
 $shop = $data['shop'] ?? null;
 $products = $data['products'] ?? [];
 
+$currency = (string)($shop['currency'] ?? 'XOF');
+
 if (!$shop) {
     echo '<main class="main-content container"><h2>Boutique introuvable</h2></main>';
     return;
@@ -12,10 +14,25 @@ if (!$shop) {
 ?>
 
 <main class="main-content container" style="padding-top: var(--spacing-lg);">
+    <style>
+        .shop-banner { width: 100%; border-radius: 16px; overflow: hidden; background: var(--color-bg-secondary); box-shadow: var(--shadow-md); }
+        .shop-banner-media { position: relative; width: 100%; padding-top: 28%; }
+        @media (max-width: 900px) { .shop-banner-media { padding-top: 40%; } }
+        .shop-banner-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    </style>
+
     <div style="margin-bottom: var(--spacing-lg); display:flex; justify-content:space-between; gap: var(--spacing-md); flex-wrap: wrap; align-items:center;">
         <a href="<?php echo url('home'); ?>" class="btn btn-ghost btn-sm">Retour</a>
         <div style="color: var(--color-text-muted); font-size: 14px;">Boutique</div>
     </div>
+
+    <?php if (!empty($shop['banner'])): ?>
+        <div class="shop-banner" style="margin-bottom: var(--spacing-lg);">
+            <div class="shop-banner-media">
+                <img src="<?php echo htmlspecialchars((string)$shop['banner']); ?>" alt="Bannière <?php echo htmlspecialchars((string)$shop['name']); ?>" onerror="this.style.display='none'" />
+            </div>
+        </div>
+    <?php endif; ?>
 
     <div style="display:flex; gap: var(--spacing-lg); align-items:center; flex-wrap: wrap; margin-bottom: var(--spacing-lg);">
         <div style="width: 72px; height: 72px; border-radius: 18px; overflow:hidden; background: var(--color-bg-secondary); flex: 0 0 72px;">
@@ -26,8 +43,27 @@ if (!$shop) {
         <div style="flex: 1; min-width: 240px;">
             <h1 style="margin:0; font-size: 28px; line-height: 1.2;"><?php echo htmlspecialchars((string)$shop['name']); ?></h1>
             <?php if (!empty($shop['description'])): ?>
+                <?php
+                $descRaw = (string)$shop['description'];
+                $descPlain = trim($descRaw);
+                $len = mb_strlen($descPlain);
+                $cut = (int)floor($len / 2);
+                $short = $len > 0 ? mb_substr($descPlain, 0, max(1, $cut)) : '';
+                $needsToggle = $len > 140;
+                ?>
+
                 <div style="margin-top: 6px; color: var(--color-text-muted); line-height: 1.6;">
-                    <?php echo nl2br(htmlspecialchars((string)$shop['description'])); ?>
+                    <div id="shop-desc-short" style="display: <?php echo $needsToggle ? 'block' : 'none'; ?>;">
+                        <?php echo nl2br(htmlspecialchars($short)); ?>...
+                    </div>
+                    <div id="shop-desc-full" style="display: <?php echo $needsToggle ? 'none' : 'block'; ?>;">
+                        <?php echo nl2br(htmlspecialchars($descPlain)); ?>
+                    </div>
+                    <?php if ($needsToggle): ?>
+                        <button type="button" class="btn btn-ghost btn-sm" style="padding: 6px 10px; font-size: 12px; margin-top: 6px;" onclick="toggleShopDesc()">
+                            Voir plus
+                        </button>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
             <div style="margin-top: 10px; display:flex; gap: 12px; flex-wrap: wrap; color: var(--color-text-muted); font-size: 14px;">
@@ -57,11 +93,20 @@ if (!$shop) {
                         $price = (float)($p['price'] ?? 0);
                         $promo = (float)($p['promo_price'] ?? 0);
                         $hasPromo = $promo > 0 && $promo < $price;
+                        $minOrderQty = (int)($p['min_order_qty'] ?? 1);
+                        if ($minOrderQty <= 0) {
+                            $minOrderQty = 1;
+                        }
                         ?>
+                        <div style="color: var(--color-text-muted); font-size: 12px; margin-bottom: var(--spacing-xs);">
+                            <span style="font-weight: 800;">Min:</span> <?php echo (int)$minOrderQty; ?>
+                            <span style="margin-left: 8px;">•</span>
+                            <span style="margin-left: 8px;">Prix: par unité</span>
+                        </div>
                         <div class="product-price-row">
-                            <span class="product-price-regular"><?php echo htmlspecialchars(number_format($hasPromo ? $promo : $price, 0, ',', ' ')); ?> XOF</span>
+                            <span class="product-price-regular"><?php echo htmlspecialchars(number_format($hasPromo ? $promo : $price, 0, ',', ' ')); ?> <?php echo htmlspecialchars($currency); ?></span>
                             <?php if ($hasPromo): ?>
-                                <span class="product-price-old"><?php echo htmlspecialchars(number_format($price, 0, ',', ' ')); ?> XOF</span>
+                                <span class="product-price-old"><?php echo htmlspecialchars(number_format($price, 0, ',', ' ')); ?> <?php echo htmlspecialchars($currency); ?></span>
                             <?php endif; ?>
                         </div>
                         <div class="product-cta-row">
@@ -73,3 +118,17 @@ if (!$shop) {
         </div>
     <?php endif; ?>
 </main>
+
+<script>
+    function toggleShopDesc() {
+        const shortEl = document.getElementById('shop-desc-short');
+        const fullEl = document.getElementById('shop-desc-full');
+        const btn = event && event.target ? event.target : null;
+        if (!shortEl || !fullEl) return;
+
+        const isShortVisible = shortEl.style.display !== 'none';
+        shortEl.style.display = isShortVisible ? 'none' : 'block';
+        fullEl.style.display = isShortVisible ? 'block' : 'none';
+        if (btn) btn.textContent = isShortVisible ? 'Voir moins' : 'Voir plus';
+    }
+</script>

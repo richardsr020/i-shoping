@@ -2,6 +2,25 @@
 $data = $_SESSION['view_data'] ?? [];
 $activeShop = $data['active_shop'] ?? null;
 $error = $data['error'] ?? null;
+
+$categories = [
+    'Automotive',
+    'Baby',
+    'Beauty & Personal Care',
+    'Books',
+    'Clothing, Shoes & Jewelry',
+    'Computers',
+    'Electronics',
+    'Health & Household',
+    'Home & Kitchen',
+    'Mobile Phones & Accessories',
+    'Office Products',
+    'Pet Supplies',
+    'Sports & Outdoors',
+    'Tools & Home Improvement',
+    'Toys & Games',
+    'Video Games',
+];
 ?>
 
 <?php if ($error): ?>
@@ -43,6 +62,11 @@ $error = $data['error'] ?? null;
                 </div>
             </div>
 
+            <div>
+                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Quantité minimale</label>
+                <input name="min_order_qty" type="number" step="1" min="1" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" value="1" />
+            </div>
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
                     <label style="display: block; font-weight: 600; margin-bottom: 6px;">Prix promo</label>
@@ -57,7 +81,12 @@ $error = $data['error'] ?? null;
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div>
                     <label style="display: block; font-weight: 600; margin-bottom: 6px;">Catégorie</label>
-                    <input name="category" type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="Catégorie" />
+                    <select name="category" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                        <option value="">—</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo htmlspecialchars($cat); ?>"><?php echo htmlspecialchars($cat); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div>
                     <label style="display: block; font-weight: 600; margin-bottom: 6px;">Marque</label>

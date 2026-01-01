@@ -36,6 +36,7 @@ try {
             s.name as shop_name,
             s.id as shop_id,
             s.stars as shop_stars,
+            s.currency as shop_currency,
             u.id as user_id
         FROM products p
         INNER JOIN shops s ON p.shop_id = s.id

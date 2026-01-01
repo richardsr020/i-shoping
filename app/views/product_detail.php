@@ -19,11 +19,27 @@ if ((!$mainImage || $mainImage === '') && !empty($images)) {
 $price = (float)($product['price'] ?? 0);
 $promo = (float)($product['promo_price'] ?? 0);
 $hasPromo = $promo > 0 && $promo < $price;
+$currency = (string)($product['shop_currency'] ?? 'XOF');
+$minOrderQty = (int)($product['min_order_qty'] ?? 1);
+if ($minOrderQty <= 0) {
+    $minOrderQty = 1;
+}
 ?>
 
 <style>
     .pd-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--spacing-2xl); align-items: start; }
     @media (max-width: 900px) { .pd-grid { grid-template-columns: 1fr; } }
+
+    .pd-qty-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 9999; }
+    .pd-qty-overlay.active { display: flex; }
+    .pd-qty-card { width: 100%; max-width: 360px; background: var(--color-bg); color: var(--color-text); border-radius: 14px; box-shadow: var(--shadow-xl); border: 1px solid rgba(0,0,0,0.12); overflow: hidden; }
+    .pd-qty-head { padding: 14px 14px 0 14px; display:flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .pd-qty-title { font-weight: 900; font-size: 14px; }
+    .pd-qty-body { padding: 12px 14px 14px 14px; display:grid; gap: 12px; }
+    .pd-qty-row { display:flex; gap: 10px; align-items: center; }
+    .pd-qty-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.12); background: var(--color-bg); color: var(--color-text); }
+    .pd-qty-actions { display:flex; justify-content: flex-end; gap: 10px; }
+    .pd-qty-close { border: none; background: transparent; color: var(--color-text-muted); cursor: pointer; padding: 6px 8px; }
 </style>
 
 <main class="main-content container" style="padding-top: var(--spacing-lg);">
@@ -42,7 +58,7 @@ $hasPromo = $promo > 0 && $promo < $price;
             </div>
 
             <div style="display:flex; gap: 10px; margin-top: var(--spacing-lg); flex-wrap: wrap;">
-                <button type="button" class="btn btn-primary" onclick="pdCreateOrder(<?php echo (int)$product['id']; ?>)">Ajouter au panier</button>
+                <button type="button" class="btn btn-primary" onclick="pdOpenQtyModal(<?php echo (int)$product['id']; ?>)">Ajouter au panier</button>
                 <a class="btn btn-ghost" href="<?php echo url('profile_shop'); ?>&id=<?php echo (int)($product['shop_id'] ?? 0); ?>">Voir la boutique</a>
             </div>
 
@@ -80,13 +96,20 @@ $hasPromo = $promo > 0 && $promo < $price;
 
             <div style="display:flex; align-items:baseline; gap:10px; margin: var(--spacing-md) 0 var(--spacing-lg) 0;">
                 <div style="font-size:30px; font-weight:900; color: var(--color-primary);">
-                    <?php echo htmlspecialchars(number_format($hasPromo ? $promo : $price, 0, ',', ' ')); ?> XOF
+                    <?php echo htmlspecialchars(number_format($hasPromo ? $promo : $price, 0, ',', ' ')); ?> <?php echo htmlspecialchars($currency); ?>
                 </div>
                 <?php if ($hasPromo): ?>
                     <div style="font-size:14px; color: var(--color-text-muted); text-decoration: line-through;">
-                        <?php echo htmlspecialchars(number_format($price, 0, ',', ' ')); ?> XOF
+                        <?php echo htmlspecialchars(number_format($price, 0, ',', ' ')); ?> <?php echo htmlspecialchars($currency); ?>
                     </div>
                 <?php endif; ?>
+            </div>
+
+            <div style="color: var(--color-text-muted); font-size: 14px; margin: -10px 0 var(--spacing-lg) 0;">
+                <span style="font-weight: 800;">Min:</span>
+                <?php echo (int)$minOrderQty; ?>
+                <span style="margin-left: 10px;">•</span>
+                <span style="margin-left: 10px;"><span style="font-weight: 800;">Prix:</span> par unité</span>
             </div>
 
             <?php if (!empty($product['description'])): ?>
@@ -102,6 +125,7 @@ $hasPromo = $promo > 0 && $promo < $price;
                 <?php if (!empty($product['brand'])): ?>
                     <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color: var(--color-text-muted);">Marque</span><strong><?php echo htmlspecialchars((string)$product['brand']); ?></strong></div>
                 <?php endif; ?>
+                <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color: var(--color-text-muted);">Quantité minimale</span><strong><?php echo (int)$minOrderQty; ?></strong></div>
                 <div style="display:flex; justify-content:space-between; gap:10px;"><span style="color: var(--color-text-muted);">Stock</span><strong><?php echo (int)($product['stock'] ?? 0); ?></strong></div>
             </div>
 
@@ -121,7 +145,7 @@ $hasPromo = $promo > 0 && $promo < $price;
                                     </div>
                                 </div>
                                 <?php if (!empty($v['additional_price']) && (float)$v['additional_price'] != 0.0): ?>
-                                    <div style="font-weight:800; color: var(--color-primary);">+<?php echo htmlspecialchars(number_format((float)$v['additional_price'], 0, ',', ' ')); ?> XOF</div>
+                                    <div style="font-weight:800; color: var(--color-primary);">+<?php echo htmlspecialchars(number_format((float)$v['additional_price'], 0, ',', ' ')); ?> <?php echo htmlspecialchars($currency); ?></div>
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
@@ -132,15 +156,107 @@ $hasPromo = $promo > 0 && $promo < $price;
     </div>
 </main>
 
+<div id="pd-qty-modal" class="pd-qty-overlay" aria-hidden="true">
+    <div class="pd-qty-card" role="dialog" aria-modal="true" aria-label="Quantité">
+        <div class="pd-qty-head">
+            <div class="pd-qty-title"><i class="fas fa-cart-shopping" style="margin-right: 8px;"></i>Quantité</div>
+            <button type="button" class="pd-qty-close" onclick="pdCloseQtyModal()"><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="pd-qty-body">
+            <div style="font-size: 12px; color: var(--color-text-muted);">Choisis le nombre d'unités à commander (min: <?php echo (int)$minOrderQty; ?>).</div>
+            <div class="pd-qty-row">
+                <input id="pd-qty-input" class="pd-qty-input" type="number" min="<?php echo (int)$minOrderQty; ?>" step="1" value="<?php echo (int)$minOrderQty; ?>" />
+            </div>
+            <div class="pd-qty-actions">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="pdCloseQtyModal()">Annuler</button>
+                <button id="pd-qty-confirm" type="button" class="btn btn-primary btn-sm" onclick="pdConfirmQty()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     window.BASE_URL = '<?php echo BASE_URL; ?>';
+    window.PD_MIN_ORDER_QTY = <?php echo (int)$minOrderQty; ?>;
 
-    async function pdCreateOrder(productId) {
+    let pdPendingProductId = null;
+
+    function pdOpenQtyModal(productId) {
+        pdPendingProductId = productId;
+        const overlay = document.getElementById('pd-qty-modal');
+        const input = document.getElementById('pd-qty-input');
+        const minQty = Math.max(1, parseInt(window.PD_MIN_ORDER_QTY || '1', 10) || 1);
+        if (input) {
+            input.min = String(minQty);
+            input.value = String(minQty);
+        }
+        if (overlay) {
+            overlay.classList.add('active');
+            overlay.setAttribute('aria-hidden', 'false');
+        }
+        setTimeout(() => { if (input) input.focus(); }, 0);
+    }
+
+    function pdCloseQtyModal() {
+        const overlay = document.getElementById('pd-qty-modal');
+        if (overlay) {
+            overlay.classList.remove('active');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+        pdPendingProductId = null;
+    }
+
+    async function pdConfirmQty() {
+        const qtyInput = document.getElementById('pd-qty-input');
+        const minQty = Math.max(1, parseInt(window.PD_MIN_ORDER_QTY || '1', 10) || 1);
+        const qty = Math.max(minQty, parseInt((qtyInput && qtyInput.value) ? qtyInput.value : String(minQty), 10) || minQty);
+        const productId = pdPendingProductId;
+        if (!productId) return;
+
+        const btn = document.getElementById('pd-qty-confirm');
+        const oldText = btn ? btn.textContent : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '...';
+        }
+
+        try {
+            await pdCreateOrder(productId, qty);
+            pdCloseQtyModal();
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = oldText;
+            }
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const overlay = document.getElementById('pd-qty-modal');
+        if (!overlay || !overlay.classList.contains('active')) return;
+        if (e.key === 'Escape') {
+            pdCloseQtyModal();
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            pdConfirmQty();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        const overlay = document.getElementById('pd-qty-modal');
+        if (!overlay || !overlay.classList.contains('active')) return;
+        if (e.target === overlay) {
+            pdCloseQtyModal();
+        }
+    });
+
+    async function pdCreateOrder(productId, quantity) {
         try {
             const res = await fetch(`${window.BASE_URL}/api/create_order.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ product_id: productId, quantity: 1 })
+                body: JSON.stringify({ product_id: productId, quantity: quantity })
             });
 
             if (res.status === 401) {

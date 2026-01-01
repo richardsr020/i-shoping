@@ -7,7 +7,6 @@ require_once __DIR__ . '/../config.php';
 
 <!-- Contenu principal -->
 <main class="main-content container">
-    <h2 class="section-title">NOS PRODUITS</h2>
     <div id="products-container" class="products-grid">
         <!-- Les produits seront chargés dynamiquement par JavaScript -->
         <div style="text-align: center; padding: var(--spacing-2xl); color: var(--color-text-muted);">

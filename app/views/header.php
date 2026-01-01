@@ -44,16 +44,19 @@ $currentPage = $_GET['page'] ?? 'home';
                 
                 <?php if ($currentPage === 'home'): ?>
                     <!-- Barre de recherche pour la page d'accueil -->
-                    <div class="search-bar" style="flex: 0 1 500px; margin: 0 var(--spacing-md);">
-                        <input type="text" placeholder="Rechercher..." style="flex: 1;">
-                        <button style="margin-left: var(--spacing-sm);"><i class="fas fa-search"></i></button>
+                    <div class="search-bar" style="display: flex; align-items: center; flex: 0 1 500px; margin: 0 var(--spacing-md);">
+                        <input id="home-search-input" type="text" placeholder="Rechercher..." style="flex: 1;">
+                        <button id="home-search-button" style="margin-left: var(--spacing-sm);"><i class="fas fa-search"></i></button>
                     </div>
                 <?php endif; ?>
                 
                 <div style="display: flex; align-items: center; gap: var(--spacing-md);">
                     <?php if (isLoggedIn()): ?>
                         <a href="<?php echo url('dashboard_shop'); ?>" class="btn btn-ghost btn-sm">
-                            <i class="fas fa-store"></i> Mes boutiques
+                            <i class="fas fa-store"></i> Boutiques
+                        </a>
+                        <a href="<?php echo url('orders'); ?>" class="btn btn-ghost btn-sm">
+                            <i class="fas fa-receipt"></i> Commandes
                         </a>
                         <a href="<?php echo url('logout'); ?>" class="btn btn-outline btn-sm">
                             <i class="fas fa-sign-out-alt"></i> Déconnexion

@@ -32,6 +32,7 @@ class Product {
                 s.url AS shop_url,
                 s.logo AS shop_logo,
                 s.banner AS shop_banner,
+                s.currency AS shop_currency,
                 s.email_contact AS shop_email_contact,
                 s.phone AS shop_phone
             FROM products p
@@ -84,12 +85,17 @@ class Product {
         $stock = (int)($data['stock'] ?? 0);
         $isPhysical = (int)($data['is_physical'] ?? 1);
         $status = trim((string)($data['status'] ?? 'active'));
+        $minOrderQty = (int)($data['min_order_qty'] ?? 1);
 
         if ($name === '') {
             throw new Exception('Le nom du produit est requis.');
         }
         if ($price <= 0) {
             throw new Exception('Le prix doit être supérieur à 0.');
+        }
+
+        if ($minOrderQty <= 0) {
+            $minOrderQty = 1;
         }
 
         $allowedStatus = ['active', 'inactive'];
@@ -123,9 +129,9 @@ class Product {
         $stmt = $this->db->prepare('
             INSERT INTO products (
                 shop_id, name, description, price, promo_price, category, brand, size, sku, weight,
-                colors_json, tags_json, image, stock, is_physical, status
+                colors_json, tags_json, image, stock, is_physical, status, min_order_qty
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             $shopId,
@@ -143,7 +149,8 @@ class Product {
             $image !== '' ? $image : null,
             $stock,
             $isPhysical,
-            $status
+            $status,
+            $minOrderQty
         ]);
 
         return (int)$this->db->lastInsertId();
@@ -157,6 +164,79 @@ class Product {
 
         $stmt = $this->db->prepare('DELETE FROM products WHERE id = ?');
         return $stmt->execute([$productId]);
+    }
+
+    public function update(int $productId, int $userId, array $data): bool {
+        $product = $this->findOwnedByUser($productId, $userId);
+        if (!$product) {
+            throw new Exception('Produit introuvable.');
+        }
+
+        $name = trim((string)($data['name'] ?? ''));
+        $description = trim((string)($data['description'] ?? ''));
+        $price = (float)($data['price'] ?? 0);
+        $promoPrice = $data['promo_price'] ?? null;
+        $category = trim((string)($data['category'] ?? ''));
+        $brand = trim((string)($data['brand'] ?? ''));
+        $size = trim((string)($data['size'] ?? ''));
+        $sku = trim((string)($data['sku'] ?? ''));
+        $stock = (int)($data['stock'] ?? 0);
+        $status = trim((string)($data['status'] ?? ($product['status'] ?? 'active')));
+        $minOrderQty = (int)($data['min_order_qty'] ?? ($product['min_order_qty'] ?? 1));
+
+        if ($name === '') {
+            throw new Exception('Le nom du produit est requis.');
+        }
+        if ($price <= 0) {
+            throw new Exception('Le prix doit être supérieur à 0.');
+        }
+
+        if ($minOrderQty <= 0) {
+            $minOrderQty = 1;
+        }
+
+        $allowedStatus = ['active', 'inactive'];
+        if (!in_array($status, $allowedStatus, true)) {
+            $status = 'active';
+        }
+
+        if ($promoPrice !== null && $promoPrice !== '') {
+            $promoPrice = (float)$promoPrice;
+        } else {
+            $promoPrice = null;
+        }
+
+        $stmt = $this->db->prepare('
+            UPDATE products
+            SET name = ?,
+                description = ?,
+                price = ?,
+                promo_price = ?,
+                category = ?,
+                brand = ?,
+                size = ?,
+                sku = ?,
+                stock = ?,
+                status = ?,
+                min_order_qty = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ');
+
+        return $stmt->execute([
+            $name,
+            $description !== '' ? $description : null,
+            $price,
+            $promoPrice,
+            $category !== '' ? $category : null,
+            $brand !== '' ? $brand : null,
+            $size !== '' ? $size : null,
+            $sku !== '' ? $sku : null,
+            $stock,
+            $status,
+            $minOrderQty,
+            $productId
+        ]);
     }
 }
 

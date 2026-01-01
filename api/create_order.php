@@ -46,6 +46,16 @@ try {
         exit;
     }
 
+    $minOrderQty = (int)($product['min_order_qty'] ?? 1);
+    if ($minOrderQty <= 0) {
+        $minOrderQty = 1;
+    }
+    if ($quantity < $minOrderQty) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Quantité invalide (minimum: ' . $minOrderQty . ').']);
+        exit;
+    }
+
     $shopId = (int)($product['shop_id'] ?? 0);
     if ($shopId <= 0) {
         throw new Exception('Boutique introuvable.');

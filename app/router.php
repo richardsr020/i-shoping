@@ -87,6 +87,14 @@ class Router {
             $controller->detail();
             return;
         }
+
+        // Route commandes (client)
+        if ($this->page === 'orders') {
+            require_once CONTROLLERS_PATH . '/OrderController.php';
+            $controller = new OrderController();
+            $controller->index();
+            return;
+        }
         
         // Route admin
         if ($this->page === 'dashboard_admin') {
