@@ -7,9 +7,13 @@
 // Configuration de l'environnement
 define('ENVIRONMENT', 'development'); // development | production
 
-// Configuration de la base de données SQLite
-define('DB_PATH', __DIR__ . '/../database/shopping.db');
-define('DB_INIT_SCRIPT', __DIR__ . '/../database/init.sql');
+// Configuration de la base de données MySQL
+define('DB_HOST', '127.0.0.1');
+define('DB_NAME', 'i_shopping');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_CHARSET', 'utf8mb4');
+define('DB_SCHEMA_MYSQL', __DIR__ . '/../database/mysql_schema.sql');
 
 // Configuration des chemins
 define('BASE_PATH', dirname(__DIR__));
@@ -19,13 +23,42 @@ define('MODELS_PATH', __DIR__ . '/models');
 define('CONTROLLERS_PATH', __DIR__ . '/controllers');
 define('PUBLIC_PATH', BASE_PATH . '/public');
 
+function detectBaseUrl(): string {
+    $fromEnv = trim((string)getenv('APP_BASE_URL'));
+    if ($fromEnv !== '') {
+        return rtrim($fromEnv, '/');
+    }
+
+    if (PHP_SAPI === 'cli') {
+        return 'http://localhost';
+    }
+
+    $https = (string)($_SERVER['HTTPS'] ?? '');
+    $scheme = ($https !== '' && strtolower($https) !== 'off') ? 'https' : 'http';
+    if (isset($_SERVER['REQUEST_SCHEME']) && is_string($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] !== '') {
+        $scheme = $_SERVER['REQUEST_SCHEME'];
+    } elseif ((int)($_SERVER['SERVER_PORT'] ?? 80) === 443) {
+        $scheme = 'https';
+    }
+
+    $host = (string)($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost');
+    $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '/index.php');
+    $basePath = str_replace('\\', '/', dirname($scriptName));
+
+    if ($basePath === '.' || $basePath === '/') {
+        $basePath = '';
+    }
+
+    return $scheme . '://' . $host . rtrim($basePath, '/');
+}
+
 // Configuration de l'URL
-define('BASE_URL', 'http://localhost:8000');
+define('BASE_URL', detectBaseUrl());
 define('APP_URL', BASE_URL . '/index.php');
 
 // Configuration de la session
 define('SESSION_NAME', 'i_shopping_session');
-define('SESSION_LIFETIME', 3600); // 1 heure
+define('SESSION_LIFETIME', 10800); // 3 heures
 
 // Configuration de sécurité
 define('PASSWORD_MIN_LENGTH', 6);
@@ -45,17 +78,11 @@ function getDB() {
     static $db = null;
     
     if ($db === null) {
-        // Créer le dossier database s'il n'existe pas
-        $dbDir = dirname(DB_PATH);
-        if (!is_dir($dbDir)) {
-            mkdir($dbDir, 0755, true);
-        }
-        
         try {
-            $db = new PDO('sqlite:' . DB_PATH);
+            $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+            $db = new PDO($dsn, DB_USER, DB_PASS);
             $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-            $db->exec('PRAGMA foreign_keys = ON');
             
             // Initialiser les tables si elles n'existent pas
             initDatabase($db);
@@ -69,301 +96,180 @@ function getDB() {
     return $db;
 }
 
+function executeSqlFileStatements(PDO $db, string $filePath): void {
+    if (!is_file($filePath)) {
+        throw new Exception('Fichier SQL introuvable: ' . $filePath);
+    }
+
+    $sql = (string)file_get_contents($filePath);
+    $parts = preg_split('/;\s*\n/', $sql);
+    if (!is_array($parts)) {
+        return;
+    }
+
+    foreach ($parts as $stmt) {
+        $stmt = trim($stmt);
+        if ($stmt === '' || substr($stmt, 0, 2) === '--') {
+            continue;
+        }
+        $db->exec($stmt);
+    }
+}
+
+function mysqlTableExists(PDO $db, string $tableName): bool {
+    $check = $db->prepare('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?');
+    $check->execute([DB_NAME, $tableName]);
+    return ((int)($check->fetchColumn() ?: 0)) > 0;
+}
+
+function mysqlColumnExists(PDO $db, string $tableName, string $columnName): bool {
+    $check = $db->prepare('
+        SELECT COUNT(*)
+        FROM information_schema.columns
+        WHERE table_schema = ? AND table_name = ? AND column_name = ?
+    ');
+    $check->execute([DB_NAME, $tableName, $columnName]);
+    return ((int)($check->fetchColumn() ?: 0)) > 0;
+}
+
+function mysqlIndexExists(PDO $db, string $tableName, string $indexName): bool {
+    $check = $db->prepare('
+        SELECT COUNT(*)
+        FROM information_schema.statistics
+        WHERE table_schema = ? AND table_name = ? AND index_name = ?
+    ');
+    $check->execute([DB_NAME, $tableName, $indexName]);
+    return ((int)($check->fetchColumn() ?: 0)) > 0;
+}
+
 // Fonction pour initialiser la base de données
 function initDatabase($db) {
-    $db->exec('PRAGMA foreign_keys = ON');
+    try {
+        $requiredTables = [
+            'roles',
+            'users',
+            'user_roles',
+            'shops',
+            'products',
+            'product_images',
+            'product_variants',
+            'orders',
+            'order_items',
+            'product_reviews',
+            'conversations',
+            'messages',
+            'notifications',
+        ];
 
-    $ensureColumns = function(string $table, array $columns) use ($db) {
-        $existing = [];
-        $stmt = $db->query("PRAGMA table_info($table)");
-        foreach ($stmt->fetchAll() as $col) {
-            $existing[$col['name']] = true;
-        }
-        foreach ($columns as $name => $definition) {
-            if (!isset($existing[$name])) {
-                $db->exec("ALTER TABLE $table ADD COLUMN $name $definition");
+        $missingTable = false;
+        foreach ($requiredTables as $table) {
+            if (!mysqlTableExists($db, $table)) {
+                $missingTable = true;
+                break;
             }
         }
-    };
 
-    // Table roles
-    $db->exec("CREATE TABLE IF NOT EXISTS roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE,
-        level INTEGER NOT NULL
-    )");
+        if ($missingTable) {
+            executeSqlFileStatements($db, DB_SCHEMA_MYSQL);
+        }
 
-    // Table users
-    $db->exec("CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        first_name TEXT NOT NULL,
-        last_name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        birth_date DATE,
-        gender TEXT,
-        status TEXT DEFAULT 'active',
-        suspended_until DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
+        $requiredColumns = [
+            'users' => [
+                'status' => "ALTER TABLE users ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active'",
+                'suspended_until' => 'ALTER TABLE users ADD COLUMN suspended_until DATETIME NULL',
+            ],
+            'shops' => [
+                'slug' => 'ALTER TABLE shops ADD COLUMN slug VARCHAR(190) NULL',
+                'url' => 'ALTER TABLE shops ADD COLUMN url VARCHAR(255) NULL',
+                'stars' => 'ALTER TABLE shops ADD COLUMN stars DOUBLE NOT NULL DEFAULT 0',
+                'suspended_until' => 'ALTER TABLE shops ADD COLUMN suspended_until DATETIME NULL',
+                'payment_methods_json' => 'ALTER TABLE shops ADD COLUMN payment_methods_json TEXT NULL',
+            ],
+            'products' => [
+                'min_order_qty' => 'ALTER TABLE products ADD COLUMN min_order_qty INT NOT NULL DEFAULT 1',
+            ],
+            'orders' => [
+                'paid' => 'ALTER TABLE orders ADD COLUMN paid TINYINT(1) NOT NULL DEFAULT 0',
+                'satisfied' => 'ALTER TABLE orders ADD COLUMN satisfied TINYINT(1) NOT NULL DEFAULT 0',
+                'canceled' => 'ALTER TABLE orders ADD COLUMN canceled TINYINT(1) NOT NULL DEFAULT 0',
+            ],
+        ];
 
-    // Table user_roles
-    $db->exec("CREATE TABLE IF NOT EXISTS user_roles (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        role_id INTEGER NOT NULL,
-        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY(role_id) REFERENCES roles(id) ON DELETE CASCADE
-    )");
+        foreach ($requiredColumns as $tableName => $columns) {
+            if (!mysqlTableExists($db, $tableName)) {
+                continue;
+            }
+            foreach ($columns as $columnName => $sql) {
+                if (!mysqlColumnExists($db, $tableName, $columnName)) {
+                    $db->exec($sql);
+                }
+            }
+        }
 
-    // Table shops (schéma export.sql)
-    $db->exec("CREATE TABLE IF NOT EXISTS shops (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        slug TEXT,
-        url TEXT,
-        description TEXT,
-        logo TEXT,
-        banner TEXT,
-        email_contact TEXT,
-        phone TEXT,
-        address TEXT,
-        city TEXT,
-        country TEXT,
-        currency TEXT DEFAULT 'USD',
-        stars REAL DEFAULT 0,
-        status TEXT DEFAULT 'active',
-        suspended_until DATETIME,
-        payment_methods_json TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-    )");
+        if (mysqlTableExists($db, 'user_roles') && !mysqlIndexExists($db, 'user_roles', 'uq_user_roles_user_role')) {
+            $db->exec('
+                DELETE ur1
+                FROM user_roles ur1
+                INNER JOIN user_roles ur2
+                    ON ur1.user_id = ur2.user_id
+                   AND ur1.role_id = ur2.role_id
+                   AND ur1.id > ur2.id
+            ');
+            $db->exec('ALTER TABLE user_roles ADD UNIQUE KEY uq_user_roles_user_role (user_id, role_id)');
+        }
 
-    $ensureColumns('shops', [
-        'payment_methods_json' => 'TEXT'
-    ]);
+        $db->exec("INSERT IGNORE INTO roles (id, name, level) VALUES (1, 'super_admin', 1)");
+        $db->exec("INSERT IGNORE INTO roles (id, name, level) VALUES (2, 'admin', 2)");
+        $db->exec("INSERT IGNORE INTO roles (id, name, level) VALUES (3, 'vendor', 3)");
+        $db->exec("INSERT IGNORE INTO roles (id, name, level) VALUES (4, 'customer', 4)");
 
-    // Table products (schéma export.sql)
-    $db->exec("CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        shop_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        description TEXT,
-        price REAL NOT NULL,
-        promo_price REAL,
-        category TEXT,
-        brand TEXT,
-        size TEXT,
-        sku TEXT,
-        weight REAL,
-        colors_json TEXT,
-        tags_json TEXT,
-        image TEXT,
-        stock INTEGER DEFAULT 0,
-        is_physical INTEGER DEFAULT 1,
-        status TEXT DEFAULT 'active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(shop_id) REFERENCES shops(id) ON DELETE CASCADE
-    )");
+        $superAdminEmail = 'admin@ishop.local';
+        $superAdminPassword = 'richardI022IS';
 
-    // Tables additionnelles
-    $db->exec("CREATE TABLE IF NOT EXISTS product_images (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_id INTEGER NOT NULL,
-        image TEXT NOT NULL,
-        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
-    )");
+        $stmt = $db->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+        $stmt->execute([$superAdminEmail]);
+        $superAdminId = (int)($stmt->fetchColumn() ?: 0);
 
-    $db->exec("CREATE TABLE IF NOT EXISTS product_variants (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_id INTEGER NOT NULL,
-        variant_name TEXT,
-        color_hex TEXT,
-        additional_price REAL DEFAULT 0,
-        stock INTEGER DEFAULT 0,
-        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
-    )");
-
-    $db->exec("CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        shop_id INTEGER NOT NULL,
-        total REAL NOT NULL,
-        status TEXT DEFAULT 'pending',
-        paid INTEGER DEFAULT 0,
-        satisfied INTEGER DEFAULT 0,
-        canceled INTEGER DEFAULT 0,
-        payment_method TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
-        FOREIGN KEY(shop_id) REFERENCES shops(id) ON DELETE CASCADE
-    )");
-
-    $db->exec("CREATE TABLE IF NOT EXISTS order_items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id INTEGER NOT NULL,
-        product_id INTEGER NOT NULL,
-        quantity INTEGER NOT NULL DEFAULT 1,
-        price REAL NOT NULL,
-        total REAL NOT NULL,
-        color TEXT,
-        size TEXT,
-        FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
-        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
-    )");
-
-    $db->exec("CREATE TABLE IF NOT EXISTS product_reviews (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_id INTEGER NOT NULL,
-        user_id INTEGER,
-        rating INTEGER NOT NULL,
-        comment TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE,
-        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
-    )");
-
-    $db->exec("CREATE TABLE IF NOT EXISTS conversations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        shop_id INTEGER NOT NULL,
-        buyer_user_id INTEGER NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(shop_id, buyer_user_id),
-        FOREIGN KEY(shop_id) REFERENCES shops(id) ON DELETE CASCADE,
-        FOREIGN KEY(buyer_user_id) REFERENCES users(id) ON DELETE CASCADE
-    )");
-
-    $db->exec("CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        conversation_id INTEGER NOT NULL,
-        sender_user_id INTEGER NOT NULL,
-        body TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-        FOREIGN KEY(sender_user_id) REFERENCES users(id) ON DELETE CASCADE
-    )");
-
-    $db->exec("CREATE TABLE IF NOT EXISTS notifications (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        shop_id INTEGER,
-        type TEXT NOT NULL,
-        title TEXT NOT NULL,
-        body TEXT,
-        data_json TEXT,
-        is_read INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY(shop_id) REFERENCES shops(id) ON DELETE CASCADE
-    )");
-
-    // Migrer shops/products si DB existante plus ancienne
-    $ensureColumns('users', [
-        'status' => "TEXT DEFAULT 'active'",
-        'suspended_until' => 'DATETIME'
-    ]);
-
-    $ensureColumns('shops', [
-        'slug' => 'TEXT',
-        'url' => 'TEXT',
-        'banner' => 'TEXT',
-        'email_contact' => 'TEXT',
-        'phone' => 'TEXT',
-        'address' => 'TEXT',
-        'city' => 'TEXT',
-        'country' => 'TEXT',
-        'currency' => "TEXT DEFAULT 'USD'",
-        'stars' => 'REAL DEFAULT 0',
-        'status' => "TEXT DEFAULT 'active'",
-        'suspended_until' => 'DATETIME'
-    ]);
-
-    $ensureColumns('products', [
-        'promo_price' => 'REAL',
-        'sku' => 'TEXT',
-        'weight' => 'REAL',
-        'colors_json' => 'TEXT',
-        'tags_json' => 'TEXT',
-        'is_physical' => 'INTEGER DEFAULT 1',
-        'min_order_qty' => 'INTEGER DEFAULT 1'
-    ]);
-
-    $ensureColumns('orders', [
-        'paid' => 'INTEGER DEFAULT 0',
-        'satisfied' => 'INTEGER DEFAULT 0',
-        'canceled' => 'INTEGER DEFAULT 0'
-    ]);
-
-    // Seeds rôles
-    $db->exec("INSERT OR IGNORE INTO roles (id, name, level) VALUES (1, 'super_admin', 1)");
-    $db->exec("INSERT OR IGNORE INTO roles (id, name, level) VALUES (2, 'admin', 2)");
-    $db->exec("INSERT OR IGNORE INTO roles (id, name, level) VALUES (3, 'vendor', 3)");
-    $db->exec("INSERT OR IGNORE INTO roles (id, name, level) VALUES (4, 'customer', 4)");
-
-    // Seed super_admin (idempotent)
-    $superAdminEmail = 'admin@ishop.local';
-    $superAdminPassword = 'richardI022IS';
-
-    $stmt = $db->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
-    $stmt->execute([$superAdminEmail]);
-    $superAdminId = (int)($stmt->fetchColumn() ?: 0);
-
-    if ($superAdminId <= 0) {
-        $hashed = password_hash($superAdminPassword, PASSWORD_ALGORITHM);
-        $db->beginTransaction();
-        try {
+        if ($superAdminId <= 0) {
+            $hashed = password_hash($superAdminPassword, PASSWORD_ALGORITHM);
             $ins = $db->prepare('INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)');
             $ins->execute(['Super', 'Admin', $superAdminEmail, $hashed]);
             $superAdminId = (int)$db->lastInsertId();
-            $db->commit();
-        } catch (Exception $e) {
-            if ($db->inTransaction()) {
-                $db->rollBack();
-            }
-            throw $e;
         }
-    }
 
-    if ($superAdminId > 0) {
-        $roleStmt = $db->prepare('SELECT id FROM roles WHERE name = ?');
-        $roleStmt->execute(['super_admin']);
-        $roleId = (int)($roleStmt->fetchColumn() ?: 0);
-        if ($roleId > 0) {
-            $check = $db->prepare('SELECT 1 FROM user_roles WHERE user_id = ? AND role_id = ? LIMIT 1');
-            $check->execute([$superAdminId, $roleId]);
-            if (!$check->fetchColumn()) {
-                $ur = $db->prepare('INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)');
-                $ur->execute([$superAdminId, $roleId]);
+        if ($superAdminId > 0) {
+            $roleStmt = $db->prepare('SELECT id FROM roles WHERE name = ? LIMIT 1');
+            $roleStmt->execute(['super_admin']);
+            $roleId = (int)($roleStmt->fetchColumn() ?: 0);
+            if ($roleId > 0) {
+                $db->prepare('INSERT IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)')->execute([$superAdminId, $roleId]);
             }
         }
-    }
 
-    // Index pour améliorer les performances
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_shops_user_id ON shops(user_id)");
-    $db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_shops_slug_unique ON shops(slug)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_products_shop_id ON products(shop_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_products_status ON products(status)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)");
-    $db->exec("CREATE INDEX IF NOT EXISTS idx_orders_shop_id ON orders(shop_id)");
+        return;
+    } catch (Throwable $e) {
+        error_log('Erreur initDatabase MySQL: ' . $e->getMessage());
+        throw $e;
+    }
 }
 
 function ensureUploadDir(string $subdir): string {
     $base = rtrim(UPLOAD_PATH, '/');
-    if (!is_dir($base)) {
-        mkdir($base, 0755, true);
+    if (!is_dir($base) && !mkdir($base, 0777, true) && !is_dir($base)) {
+        throw new Exception('Impossible de créer le dossier de stockage des images.');
+    }
+    @chmod($base, 0777);
+    if (!is_writable($base)) {
+        throw new Exception('Le dossier de stockage des images n\'est pas inscriptible.');
     }
 
     $target = $base . '/' . trim($subdir, '/');
-    if (!is_dir($target)) {
-        mkdir($target, 0755, true);
+    if (!is_dir($target) && !mkdir($target, 0777, true) && !is_dir($target)) {
+        throw new Exception('Impossible de créer le dossier de destination des images.');
+    }
+    @chmod($target, 0777);
+    if (!is_writable($target)) {
+        throw new Exception('Le dossier de destination des images n\'est pas inscriptible.');
     }
     return $target;
 }
@@ -397,8 +303,13 @@ function saveUploadedImage(array $file, string $subdir): ?string {
     $filename = bin2hex(random_bytes(16)) . $ext;
     $targetPath = rtrim($dir, '/') . '/' . $filename;
 
+    if (!is_writable($dir)) {
+        throw new Exception('Le dossier de destination des images n\'est pas inscriptible.');
+    }
+
     if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-        throw new Exception('Impossible de sauvegarder l\'image.');
+        error_log('Echec move_uploaded_file vers ' . $targetPath . ' depuis ' . (string)($file['tmp_name'] ?? ''));
+        throw new Exception('Impossible de sauvegarder l\'image. Vérifiez les permissions du dossier public/uploads.');
     }
 
     return '/public/uploads/' . trim($subdir, '/') . '/' . $filename;
@@ -453,5 +364,26 @@ function url($page) {
     return APP_URL . "?page=" . $page;
 }
 
+function bootstrapDatabaseOnIndexLoad(): void {
+    static $done = false;
+    if ($done) {
+        return;
+    }
+
+    if (PHP_SAPI === 'cli') {
+        return;
+    }
+
+    $script = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+    if ($script !== 'index.php') {
+        return;
+    }
+
+    // Force l'initialisation MySQL au chargement d'index.php.
+    getDB();
+    $done = true;
+}
+
 // Démarrer la session sécurisée
 startSecureSession();
+bootstrapDatabaseOnIndexLoad();

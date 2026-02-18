@@ -9,6 +9,29 @@ class Message {
         $this->db = getDB();
     }
 
+    private function sanitizeBody(string $body): string {
+        $body = trim($body);
+        if ($body === '') {
+            return '';
+        }
+
+        $replacements = [
+            '/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i' => '[coordonnées supprimées]',
+            '/\b(?:https?:\/\/)?(?:www\.)?(?:t\.me|telegram\.me|telegram\.dog)\/[A-Za-z0-9_]{3,}\b/i' => '[coordonnées supprimées]',
+            '/\b(?:https?:\/\/)?(?:wa\.me|api\.whatsapp\.com)\/[0-9]+\b/i' => '[coordonnées supprimées]',
+            '/\b(?:whatsapp|telegram|tg|t\.me)\b/i' => '[coordonnées supprimées]',
+            '/\+?\d[\d\s().-]{7,}\d/' => '[coordonnées supprimées]',
+        ];
+
+        foreach ($replacements as $pattern => $replacement) {
+            $body = preg_replace($pattern, $replacement, $body);
+        }
+
+        $body = preg_replace('/\[coordonnées supprimées\](?:\s*\[coordonnées supprimées\])+/i', '[coordonnées supprimées]', $body);
+        $body = trim($body);
+        return $body;
+    }
+
     public function listByConversation(int $conversationId, int $limit = 50, int $afterId = 0): array {
         $limit = max(1, min(200, $limit));
         $afterId = max(0, $afterId);
@@ -26,14 +49,15 @@ class Message {
     }
 
     public function send(int $conversationId, int $senderUserId, string $body): int {
-        $body = trim($body);
+        $body = $this->sanitizeBody($body);
         if ($conversationId <= 0 || $senderUserId <= 0) {
             throw new Exception('Paramètres invalides.');
         }
         if ($body === '') {
             throw new Exception('Message vide.');
         }
-        if (mb_strlen($body) > 2000) {
+        $len = function_exists('mb_strlen') ? mb_strlen($body) : strlen($body);
+        if ($len > 2000) {
             throw new Exception('Message trop long.');
         }
 

@@ -28,6 +28,8 @@ try {
     $search = $_GET['search'] ?? null;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
     $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+    $limit = max(1, min(100, $limit));
+    $offset = max(0, $offset);
     
     // Construire la requête
     $query = "
@@ -73,9 +75,7 @@ try {
         $params[] = $searchTerm;
     }
     
-    $query .= " ORDER BY p.created_at DESC LIMIT ? OFFSET ?";
-    $params[] = $limit;
-    $params[] = $offset;
+    $query .= " ORDER BY p.created_at DESC LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
     
     $stmt = $db->prepare($query);
     $stmt->execute($params);
@@ -145,7 +145,6 @@ try {
         'message' => $e->getMessage()
     ]);
 }
-
 
 
 

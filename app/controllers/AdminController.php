@@ -91,6 +91,8 @@ class AdminController {
         ');
         $recentNotifications = $recentNotificationsStmt->fetchAll();
 
+        $salesCutoff = date('Y-m-d H:i:s', time() - (30 * 86400));
+
         $salesByDayStmt = $db->query("
             SELECT
                 DATE(created_at) AS day,
@@ -98,7 +100,7 @@ class AdminController {
             FROM orders
             WHERE COALESCE(canceled, 0) = 0
               AND COALESCE(paid, 0) = 1
-              AND created_at >= DATETIME('now', '-30 days')
+              AND created_at >= " . $db->quote($salesCutoff) . "
             GROUP BY DATE(created_at)
             ORDER BY DATE(created_at) ASC
         ");
@@ -153,7 +155,7 @@ class AdminController {
                     u.status,
                     u.suspended_until,
                     u.created_at,
-                    COALESCE(GROUP_CONCAT(r.name, ", "), "") AS roles
+                    COALESCE(GROUP_CONCAT(r.name SEPARATOR ", "), \'\') AS roles
                 FROM users u
                 LEFT JOIN user_roles ur ON ur.user_id = u.id
                 LEFT JOIN roles r ON r.id = ur.role_id
@@ -201,7 +203,7 @@ class AdminController {
                     o.*,
                     s.name AS shop_name,
                     u.email AS customer_email,
-                    TRIM(COALESCE(u.first_name, \'\') || \' \' || COALESCE(u.last_name, \'\')) AS customer_name
+                    TRIM(CONCAT(COALESCE(u.first_name, \'\'), \' \', COALESCE(u.last_name, \'\'))) AS customer_name
                 FROM orders o
                 LEFT JOIN shops s ON s.id = o.shop_id
                 LEFT JOIN users u ON u.id = o.user_id
@@ -258,7 +260,7 @@ class AdminController {
         }
 
         $db = getDB();
-        $db->prepare('UPDATE users SET status = "suspended", suspended_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        $db->prepare("UPDATE users SET status = 'suspended', suspended_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
             ->execute([$until, $targetId]);
 
         redirect('dashboard_admin&tab=users');
@@ -274,7 +276,7 @@ class AdminController {
         }
 
         $db = getDB();
-        $db->prepare('UPDATE users SET status = "active", suspended_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        $db->prepare("UPDATE users SET status = 'active', suspended_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
             ->execute([$targetId]);
 
         redirect('dashboard_admin&tab=users');
@@ -313,7 +315,7 @@ class AdminController {
             }
         }
 
-        getDB()->prepare('UPDATE shops SET status = "suspended", suspended_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        getDB()->prepare("UPDATE shops SET status = 'suspended', suspended_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
             ->execute([$until, $shopId]);
 
         redirect('dashboard_admin&tab=shops');
@@ -327,7 +329,7 @@ class AdminController {
             redirect('dashboard_admin&tab=shops');
         }
 
-        getDB()->prepare('UPDATE shops SET status = "active", suspended_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+        getDB()->prepare("UPDATE shops SET status = 'active', suspended_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
             ->execute([$shopId]);
 
         redirect('dashboard_admin&tab=shops');
@@ -411,7 +413,7 @@ class AdminController {
         }
 
         $db = getDB();
-        $db->prepare('UPDATE products SET status = "active", updated_at = CURRENT_TIMESTAMP WHERE id = ?')->execute([$productId]);
+        $db->prepare("UPDATE products SET status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$productId]);
         redirect('dashboard_admin&tab=products');
     }
 
@@ -423,7 +425,7 @@ class AdminController {
         }
 
         $db = getDB();
-        $db->prepare('UPDATE products SET status = "inactive", updated_at = CURRENT_TIMESTAMP WHERE id = ?')->execute([$productId]);
+        $db->prepare("UPDATE products SET status = 'inactive', updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$productId]);
         redirect('dashboard_admin&tab=products');
     }
 

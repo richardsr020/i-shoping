@@ -46,27 +46,28 @@ i-shoping/
 │   ├── css/
 │   ├── js/
 │   └── images/
-└── database/              # Base de données SQLite
-    └── shopping.db
+└── database/              # Scripts SQL MySQL
+    ├── mysql_schema.sql
+    └── export.sql         # Ancien export SQLite (archive)
 ```
 
 ## Technologies utilisées
 
 - **Backend** : PHP (code natif)
 - **Frontend** : HTML5, CSS3, JavaScript (vanilla)
-- **Base de données** : SQLite
+- **Base de données** : MySQL (PDO)
 - **Architecture** : MVC (Model-View-Controller)
 
 ## Installation
 
 1. **Prérequis**
-   - PHP 7.4 ou supérieur avec extension SQLite3
+   - PHP 7.4 ou supérieur avec extension `pdo_mysql`
    - Serveur web (Apache/Nginx) ou serveur PHP intégré
 
 2. **Configuration**
    - Le fichier `app/config.php` contient toutes les configurations de la plateforme
-   - La base de données SQLite est créée automatiquement lors de la première utilisation
-   - Assurez-vous que le dossier `database/` est accessible en écriture
+   - Configurez les constantes MySQL dans `app/config.php` (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`)
+   - Le schéma `database/mysql_schema.sql` est appliqué automatiquement si des tables manquent
 
 3. **Lancement**
    ```bash
@@ -100,7 +101,7 @@ http://localhost:8000/index.php?page=nom_page
 
 ## Base de données
 
-La base de données SQLite contient les tables suivantes :
+La base de données MySQL contient les tables suivantes :
 
 - **users** : Informations des utilisateurs
 - **shops** : Informations des boutiques (liées aux utilisateurs)
@@ -124,4 +125,3 @@ La base de données SQLite contient les tables suivantes :
 ## Auteur
 
 Développé pour i-shopping - Plateforme e-commerce multi-utilisateurs
-

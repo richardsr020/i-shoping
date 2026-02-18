@@ -19,6 +19,23 @@ if (!$shop) {
     echo '<main class="main-content container"><h2>Boutique introuvable</h2></main>';
     return;
 }
+
+$resolveImageUrl = static function ($path): string {
+    $path = trim((string)$path);
+    if ($path === '') {
+        return '';
+    }
+    if (preg_match('/^https?:\/\//i', $path)) {
+        return $path;
+    }
+    if (strpos($path, '/') === 0) {
+        return rtrim((string)BASE_URL, '/') . $path;
+    }
+    return rtrim((string)BASE_URL, '/') . '/' . ltrim($path, '/');
+};
+
+$shopBannerUrl = $resolveImageUrl((string)($shop['banner'] ?? ''));
+$shopLogoUrl = $resolveImageUrl((string)($shop['logo'] ?? ''));
 ?>
 
 <main class="main-content container" style="padding-top: var(--spacing-lg);">
@@ -34,18 +51,18 @@ if (!$shop) {
         <div style="color: var(--color-text-muted); font-size: 14px;">Boutique</div>
     </div>
 
-    <?php if (!empty($shop['banner'])): ?>
+    <?php if (!empty($shopBannerUrl)): ?>
         <div class="shop-banner" style="margin-bottom: var(--spacing-lg);">
             <div class="shop-banner-media">
-                <img src="<?php echo htmlspecialchars((string)$shop['banner']); ?>" alt="Bannière <?php echo htmlspecialchars((string)$shop['name']); ?>" onerror="this.style.display='none'" />
+                <img src="<?php echo htmlspecialchars((string)$shopBannerUrl); ?>" alt="Bannière <?php echo htmlspecialchars((string)$shop['name']); ?>" onerror="this.style.display='none'" />
             </div>
         </div>
     <?php endif; ?>
 
     <div style="display:flex; gap: var(--spacing-lg); align-items:center; flex-wrap: wrap; margin-bottom: var(--spacing-lg);">
         <div style="width: 72px; height: 72px; border-radius: 18px; overflow:hidden; background: var(--color-bg-secondary); flex: 0 0 72px;">
-            <?php if (!empty($shop['logo'])): ?>
-                <img src="<?php echo htmlspecialchars((string)$shop['logo']); ?>" alt="<?php echo htmlspecialchars((string)$shop['name']); ?>" style="width:72px; height:72px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
+            <?php if (!empty($shopLogoUrl)): ?>
+                <img src="<?php echo htmlspecialchars((string)$shopLogoUrl); ?>" alt="<?php echo htmlspecialchars((string)$shop['name']); ?>" style="width:72px; height:72px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
             <?php endif; ?>
         </div>
         <div style="flex: 1; min-width: 240px;">
@@ -54,9 +71,9 @@ if (!$shop) {
                 <?php
                 $descRaw = (string)$shop['description'];
                 $descPlain = trim($descRaw);
-                $len = mb_strlen($descPlain);
+                $len = function_exists('mb_strlen') ? mb_strlen($descPlain) : strlen($descPlain);
                 $cut = (int)floor($len / 2);
-                $short = $len > 0 ? mb_substr($descPlain, 0, max(1, $cut)) : '';
+                $short = $len > 0 ? (function_exists('mb_substr') ? mb_substr($descPlain, 0, max(1, $cut)) : substr($descPlain, 0, max(1, $cut))) : '';
                 $needsToggle = $len > 140;
                 ?>
 
@@ -74,14 +91,7 @@ if (!$shop) {
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
-            <div style="margin-top: 10px; display:flex; gap: 12px; flex-wrap: wrap; color: var(--color-text-muted); font-size: 14px;">
-                <?php if (!empty($shop['email_contact'])): ?>
-                    <div>Email: <strong><?php echo htmlspecialchars((string)$shop['email_contact']); ?></strong></div>
-                <?php endif; ?>
-                <?php if (!empty($shop['phone'])): ?>
-                    <div>Tél: <strong><?php echo htmlspecialchars((string)$shop['phone']); ?></strong></div>
-                <?php endif; ?>
-            </div>
+            <div style="margin-top: 10px;"></div>
 
             <?php if (!empty($shopPm)): ?>
                 <div style="margin-top: 10px; display:flex; gap: 10px; flex-wrap: wrap; align-items:center;">
@@ -113,9 +123,13 @@ if (!$shop) {
     <?php else: ?>
         <div class="products-grid">
             <?php foreach ($products as $p): ?>
+                <?php
+                $productImageUrl = $resolveImageUrl((string)($p['image'] ?? ''));
+                $productImageSrc = $productImageUrl !== '' ? $productImageUrl : 'https://via.placeholder.com/300';
+                ?>
                 <div class="product-card">
                     <a href="<?php echo url('product_detail'); ?>&id=<?php echo (int)$p['id']; ?>" style="display:block;">
-                        <img class="product-image" src="<?php echo !empty($p['image']) ? htmlspecialchars((string)$p['image']) : 'https://via.placeholder.com/300'; ?>" alt="<?php echo htmlspecialchars((string)$p['name']); ?>" onerror="this.src='https://via.placeholder.com/300'" />
+                        <img class="product-image" src="<?php echo htmlspecialchars((string)$productImageSrc); ?>" alt="<?php echo htmlspecialchars((string)$p['name']); ?>" onerror="this.src='https://via.placeholder.com/300'" />
                     </a>
                     <div class="product-info">
                         <h3 class="product-name" title="<?php echo htmlspecialchars((string)$p['name']); ?>"><?php echo htmlspecialchars((string)$p['name']); ?></h3>

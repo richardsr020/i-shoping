@@ -128,7 +128,7 @@ class Order {
     public function getByShopId(int $shopId): array {
         $stmt = $this->db->prepare('
             SELECT o.*,
-                   TRIM(COALESCE(u.first_name, \'\') || \' \' || COALESCE(u.last_name, \'\')) AS customer_name,
+                   TRIM(CONCAT(COALESCE(u.first_name, \'\'), \' \', COALESCE(u.last_name, \'\'))) AS customer_name,
                    u.email AS customer_email
             FROM orders o
             LEFT JOIN users u ON u.id = o.user_id
@@ -201,7 +201,7 @@ class Order {
             LEFT JOIN products p ON p.id = oi.product_id
             WHERE o.user_id = ?
               AND COALESCE(o.canceled, 0) = 0
-              AND COALESCE(o.status, "pending") != "completed"
+              AND COALESCE(o.status, \'pending\') != \'completed\'
             ORDER BY o.created_at DESC
         ');
         $stmt->execute([$userId]);
@@ -257,7 +257,7 @@ class Order {
         $sql = '
             SELECT
                 o.*,
-                TRIM(COALESCE(u.first_name, \'\') || \' \' || COALESCE(u.last_name, \'\')) AS customer_name,
+                TRIM(CONCAT(COALESCE(u.first_name, \'\'), \' \', COALESCE(u.last_name, \'\'))) AS customer_name,
                 u.email AS customer_email
             FROM orders o
             LEFT JOIN users u ON u.id = o.user_id
@@ -277,6 +277,7 @@ class Order {
         }
 
         $days = max(1, min(365, $days));
+        $cutoff = date('Y-m-d H:i:s', time() - ($days * 86400));
         $paidClause = $paidOnly ? ' AND paid = 1' : '';
 
         $stmt = $this->db->prepare('
@@ -287,12 +288,12 @@ class Order {
             WHERE shop_id = ?
               AND COALESCE(canceled, 0) = 0
               ' . $paidClause . '
-              AND created_at >= DATETIME(\'now\', ?)
+              AND created_at >= ?
             GROUP BY DATE(created_at)
             ORDER BY DATE(created_at) ASC
         ');
 
-        $stmt->execute([$shopId, '-' . $days . ' days']);
+        $stmt->execute([$shopId, $cutoff]);
         return $stmt->fetchAll();
     }
 }

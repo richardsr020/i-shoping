@@ -151,6 +151,8 @@ class Router {
             $controller = new ChatController();
             if ($this->action === 'list' && $_SERVER['REQUEST_METHOD'] === 'GET') {
                 $controller->listConversations();
+            } elseif ($this->action === 'start' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $controller->startConversation();
             } elseif ($this->action === 'poll' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $controller->pollMessages();
             } elseif ($this->action === 'send' && $_SERVER['REQUEST_METHOD'] === 'POST') {

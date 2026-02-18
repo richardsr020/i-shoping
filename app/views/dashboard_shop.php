@@ -513,6 +513,7 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=shops" class="<?php echo $tab === 'shops' ? 'active' : ''; ?>"><i class="fas fa-store"></i> Mes boutiques</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=products" class="<?php echo $tab === 'products' ? 'active' : ''; ?>"><i class="fas fa-shopping-bag"></i> Produits</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=orders" class="<?php echo $tab === 'orders' ? 'active' : ''; ?>"><i class="fas fa-receipt"></i> Commandes</a></li>
+            <li><a href="<?php echo url('chat'); ?>"><i class="fas fa-comments"></i> Messagerie</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=settings" class="<?php echo $tab === 'settings' ? 'active' : ''; ?>"><i class="fas fa-cog"></i> Paramètres</a></li>
         </ul>
     </div>
@@ -569,6 +570,6 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
     </div>
 
     <script src="<?php echo BASE_URL; ?>/public/js/theme.js"></script>
-    <script></script>
+    <script src="<?php echo BASE_URL; ?>/public/js/app.js"></script>
 </body>
 </html>

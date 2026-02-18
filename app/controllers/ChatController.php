@@ -8,7 +8,8 @@ require_once __DIR__ . '/../models/Notification.php';
 class ChatController {
     public function index(): void {
         if (!isLoggedIn()) {
-            $_SESSION['redirect_after_login'] = 'chat';
+            $shopId = (int)($_GET['shop_id'] ?? 0);
+            $_SESSION['redirect_after_login'] = $shopId > 0 ? ('chat&shop_id=' . $shopId) : 'chat';
             redirect('login');
         }
 
@@ -41,17 +42,51 @@ class ChatController {
         return $payload;
     }
 
+    public function startConversation(): void {
+        header('Content-Type: application/json');
+        $payload = $this->requireJsonPost();
+
+        $shopId = (int)($payload['shop_id'] ?? 0);
+        if ($shopId <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'shop_id invalide']);
+            exit;
+        }
+
+        $uid = (int)$_SESSION['user_id'];
+        try {
+            $shopModel = new Shop();
+            $shop = $shopModel->findById($shopId);
+            if (!$shop) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Boutique introuvable']);
+                exit;
+            }
+
+            $convModel = new Conversation();
+            $conversationId = $convModel->getOrCreate($shopId, $uid);
+            echo json_encode(['success' => true, 'conversation_id' => $conversationId]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        }
+
+        exit;
+    }
+
     public function listConversations(): void {
         header('Content-Type: application/json');
         if (!isLoggedIn()) {
             http_response_code(401);
             echo json_encode(['success' => false, 'error' => 'Connexion requise']);
-            return;
+            exit;
         }
 
         $conv = new Conversation();
         $items = $conv->listForUser((int)$_SESSION['user_id']);
         echo json_encode(['success' => true, 'conversations' => $items]);
+
+        exit;
     }
 
     public function pollMessages(): void {
@@ -63,7 +98,7 @@ class ChatController {
         if ($conversationId <= 0) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'conversation_id invalide']);
-            return;
+            exit;
         }
 
         $conv = new Conversation();
@@ -71,12 +106,14 @@ class ChatController {
         if (!$conv->userCanAccess($conversationId, $uid)) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'Accès refusé']);
-            return;
+            exit;
         }
 
         $msg = new Message();
         $messages = $msg->listByConversation($conversationId, 100, $afterId);
         echo json_encode(['success' => true, 'messages' => $messages]);
+
+        exit;
     }
 
     public function sendMessage(): void {
@@ -87,6 +124,8 @@ class ChatController {
         $conversationId = (int)($payload['conversation_id'] ?? 0);
         $body = (string)($payload['body'] ?? '');
 
+        error_log('[chat.send] called uid=' . (int)($_SESSION['user_id'] ?? 0) . ' conversation_id=' . $conversationId . ' shop_id=' . $shopId . ' body_len=' . strlen(trim($body)));
+
         $uid = (int)$_SESSION['user_id'];
         $shopModel = new Shop();
         $convModel = new Conversation();
@@ -96,20 +135,20 @@ class ChatController {
             if (!$convModel->userCanAccess($conversationId, $uid)) {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'error' => 'Accès refusé']);
-                return;
+                exit;
             }
         } else {
             if ($shopId <= 0) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'error' => 'shop_id invalide']);
-                return;
+                exit;
             }
 
             $shop = $shopModel->findById($shopId);
             if (!$shop) {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'error' => 'Boutique introuvable']);
-                return;
+                exit;
             }
 
             // buyer is current user; vendor is shop.user_id
@@ -120,6 +159,8 @@ class ChatController {
         try {
             $messageModel = new Message();
             $newId = $messageModel->send($conversationId, $uid, $body);
+
+            error_log('[chat.send] inserted message_id=' . $newId . ' conversation_id=' . $conversationId);
 
             // Notify shop and buyer
             $db = getDB();
@@ -151,9 +192,12 @@ class ChatController {
             }
 
             echo json_encode(['success' => true, 'conversation_id' => $conversationId, 'message_id' => $newId]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
+            error_log('[chat.send] error: ' . get_class($e) . ': ' . $e->getMessage());
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => $e->getMessage()]);
         }
+
+        exit;
     }
 }

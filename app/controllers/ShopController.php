@@ -15,7 +15,7 @@ class ShopController {
         }
 
         $shopModel = new Shop();
-        if ($shopModel->countByUserId((int)$_SESSION['user_id']) >= 1) {
+        if ($shopModel->countByUserId((int)$_SESSION['user_id']) >= 4) {
             redirect('dashboard_shop&tab=shops');
         }
 
@@ -41,8 +41,8 @@ class ShopController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 if ($action === 'create_shop') {
-                    if ($shopModel->countByUserId((int)$_SESSION['user_id']) >= 1) {
-                        throw new Exception('Pour le moment, un compte ne peut créer qu\'une seule boutique.');
+                    if ($shopModel->countByUserId((int)$_SESSION['user_id']) >= 4) {
+                        throw new Exception('Limite atteinte: un compte ne peut créer que 4 boutiques au maximum.');
                     }
 
                     $allowedPaymentMethods = ['orange_money', 'mpesa', 'airtel_money', 'crypto_usdt'];
@@ -405,11 +405,14 @@ class ShopController {
             $until = $shop['suspended_until'] ?? null;
             $ts = $until ? strtotime((string)$until) : null;
             if ($ts !== null && $ts <= time()) {
-                getDB()->prepare('UPDATE shops SET status = "active", suspended_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?')->execute([$shopId]);
+                getDB()->prepare("UPDATE shops SET status = 'active', suspended_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$shopId]);
                 $shop = $shopModel->findById($shopId) ?: $shop;
             } else {
                 http_response_code(403);
-                $_SESSION['view_data'] = ['title' => 'Boutique suspendue', 'shop' => null, 'products' => []];
+                $data = ['title' => 'Boutique suspendue', 'shop' => null, 'products' => [], 'error' => 'Boutique suspendue'];
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    $_SESSION['view_data'] = $data;
+                }
                 return;
             }
         }

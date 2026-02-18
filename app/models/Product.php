@@ -38,7 +38,7 @@ class Product {
                 s.phone AS shop_phone
             FROM products p
             INNER JOIN shops s ON s.id = p.shop_id
-            WHERE p.id = ? AND p.status = "active"
+            WHERE p.id = ? AND p.status = \'active\'
             LIMIT 1
         ');
         $stmt->execute([$productId]);
@@ -47,7 +47,7 @@ class Product {
     }
 
     public function getActiveByShopIdPublic(int $shopId): array {
-        $stmt = $this->db->prepare('SELECT * FROM products WHERE shop_id = ? AND status = "active" ORDER BY created_at DESC');
+        $stmt = $this->db->prepare('SELECT * FROM products WHERE shop_id = ? AND status = \'active\' ORDER BY created_at DESC');
         $stmt->execute([$shopId]);
         return $stmt->fetchAll();
     }
@@ -240,4 +240,3 @@ class Product {
         ]);
     }
 }
-

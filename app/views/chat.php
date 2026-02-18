@@ -1,10 +1,28 @@
+<?php
+require_once __DIR__ . '/../config.php';
+
+$activeShopName = APP_NAME;
+
+$backUrl = url('home');
+$ref = (string)($_SERVER['HTTP_REFERER'] ?? '');
+if ($ref !== '') {
+    $u = parse_url($ref);
+    $baseHost = (string)(parse_url((string)BASE_URL, PHP_URL_HOST) ?? '');
+    $refHost = (string)($u['host'] ?? '');
+    if ($baseHost !== '' && $refHost === $baseHost) {
+        $backUrl = $ref;
+    }
+}
+?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messagerie - iShopping</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/theme.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/public/css/pages.css">
     <script>
         window.APP_URL = <?php echo json_encode((string)APP_URL); ?>;
     </script>
@@ -18,24 +36,25 @@
         }
 
         :root {
-            --primary: #ff4500;
-            --primary-dark: #e03d00;
-            --secondary: #1e90ff;
-            --dark: #000;
-            --light: #fff;
-            --gray: #f8f9fa;
-            --gray-dark: #6c757d;
+            --primary: var(--color-primary);
+            --primary-dark: var(--color-primary-dark);
+            --secondary: var(--color-primary);
+            --dark: var(--color-black);
+            --light: var(--color-white);
+            --gray: var(--color-bg-secondary);
+            --gray-dark: var(--color-text-muted);
             --success: #28a745;
             --warning: #ffc107;
             --danger: #dc3545;
         }
 
         body {
-            background-color: #f5f5f5;
-            color: #333;
+            background-color: var(--color-bg-secondary);
+            color: var(--color-text);
             line-height: 1.6;
             display: flex;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
         }
 
         a {
@@ -68,7 +87,7 @@
         }
 
         .card {
-            background: white;
+            background: var(--color-bg);
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             padding: 20px;
@@ -78,8 +97,8 @@
         /* === SIDEBAR === */
         .sidebar {
             width: 350px;
-            background-color: var(--dark);
-            color: white;
+            background-color: var(--color-bg);
+            color: var(--color-text);
             padding: 20px 0;
             transition: all 0.3s;
             display: flex;
@@ -88,7 +107,7 @@
 
         .logo {
             padding: 0 20px 20px;
-            border-bottom: 1px solid #333;
+            border-bottom: none;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -109,7 +128,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid #333;
+            border-bottom: none;
             margin-bottom: 20px;
         }
 
@@ -155,8 +174,8 @@
         }
 
         .nav-links a:hover, .nav-links a.active {
-            background-color: #333;
-            color: white;
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-text);
         }
 
         .nav-links i {
@@ -170,16 +189,44 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         /* Header */
         .top-header {
-            background-color: white;
+            background-color: var(--color-bg);
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: none;
+            background: var(--color-bg-tertiary);
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .back-btn i {
+            color: var(--color-text-muted);
         }
 
         .search-bar {
@@ -192,7 +239,9 @@
             width: 100%;
             padding: 10px 15px;
             border-radius: 20px;
-            border: 1px solid #ddd;
+            border: none;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text);
         }
 
         .header-actions {
@@ -210,7 +259,7 @@
 
         .header-action-item i {
             font-size: 18px;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
         }
 
         .notification-badge {
@@ -237,20 +286,22 @@
             flex: 1;
             display: flex;
             padding: 0;
+            min-height: 0;
         }
 
         /* Liste des conversations */
         .conversations-sidebar {
             width: 350px;
-            background-color: white;
-            border-right: 1px solid #eee;
+            background-color: var(--color-bg);
+            border-right: none;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .conversations-header {
             padding: 20px;
-            border-bottom: 1px solid #eee;
+            border-bottom: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -262,16 +313,17 @@
 
         .conversation-filters {
             padding: 15px 20px;
-            border-bottom: 1px solid #eee;
+            border-bottom: none;
             display: flex;
             gap: 10px;
         }
 
         .filter-btn {
             padding: 8px 15px;
-            border: 1px solid #eee;
+            border: none;
             border-radius: 20px;
-            background: white;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text);
             cursor: pointer;
             font-size: 13px;
             transition: all 0.3s;
@@ -290,33 +342,34 @@
 
         .conversation-item {
             padding: 15px 20px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: none;
             display: flex;
             align-items: center;
             gap: 15px;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
         }
 
         .conversation-item:hover {
-            background-color: #f9f9f9;
+            background-color: var(--color-bg-secondary);
         }
 
         .conversation-item.active {
-            background-color: #f0f7ff;
-            border-left: 3px solid var(--secondary);
+            background-color: var(--color-bg-tertiary);
+            border-left: none;
         }
 
         .conversation-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background-color: #f0f0f0;
+            background-color: var(--color-bg-tertiary);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--gray-dark);
-            font-size: 18px;
+            color: var(--primary);
+            font-size: 20px;
             flex-shrink: 0;
         }
 
@@ -341,12 +394,12 @@
 
         .conversation-time {
             font-size: 12px;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
         }
 
         .conversation-preview {
             font-size: 13px;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -370,16 +423,38 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background-color: #f9f9f9;
+            background-color: var(--color-bg-secondary);
+            min-height: 0;
+        }
+
+        .chat-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 999;
+        }
+
+        .conversation-toggle-btn {
+            display: none;
+            border: none;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text);
+            padding: 8px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-right: 10px;
         }
 
         .chat-header {
             padding: 15px 25px;
-            background-color: white;
-            border-bottom: 1px solid #eee;
+            background-color: var(--color-bg);
+            border-bottom: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+            z-index: 5;
         }
 
         .chat-partner {
@@ -392,12 +467,14 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background-color: #f0f0f0;
+            background-color: var(--color-bg-tertiary);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--gray-dark);
-            font-size: 16px;
+            color: var(--primary);
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
         }
 
         .chat-partner-info h3 {
@@ -407,7 +484,7 @@
 
         .chat-partner-info p {
             font-size: 13px;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
         }
 
         .chat-actions {
@@ -418,7 +495,7 @@
         .chat-action-btn {
             background: none;
             border: none;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
             cursor: pointer;
             font-size: 16px;
         }
@@ -431,17 +508,19 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            min-height: 0;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
         }
 
         .message {
             max-width: 70%;
             padding: 12px 16px;
             border-radius: 18px;
-            position: relative;
+            font-size: 14px;
             line-height: 1.4;
+            margin: 0 4px;
         }
 
         .message.sent {
@@ -453,9 +532,10 @@
 
         .message.received {
             align-self: flex-start;
-            background-color: white;
-            border: 1px solid #eee;
+            background-color: var(--color-bg-tertiary);
+            border: none;
             border-bottom-left-radius: 5px;
+            color: var(--color-text);
         }
 
         .message-time {
@@ -481,8 +561,8 @@
         /* Zone de saisie */
         .message-input-container {
             padding: 20px;
-            background-color: white;
-            border-top: 1px solid #eee;
+            background-color: var(--color-bg);
+            border-top: none;
         }
 
         .input-actions {
@@ -495,7 +575,7 @@
         .input-action-btn {
             background: none;
             border: none;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
             cursor: pointer;
             font-size: 18px;
         }
@@ -513,19 +593,19 @@
         .message-input {
             flex: 1;
             padding: 12px 15px;
-            border: 1px solid #ddd;
+            border: none;
             border-radius: 24px;
             resize: none;
             font-family: inherit;
             font-size: 14px;
             line-height: 1.4;
-            max-height: 120px;
             min-height: 44px;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text);
         }
 
         .message-input:focus {
             outline: none;
-            border-color: var(--primary);
         }
 
         .send-btn {
@@ -548,33 +628,34 @@
         }
 
         .send-btn:disabled {
-            background-color: #ccc;
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-text-muted);
             cursor: not-allowed;
             transform: none;
         }
 
         /* État vide */
         .empty-state {
-            flex: 1;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             padding: 40px;
-            color: var(--gray-dark);
+            color: var(--color-text-muted);
         }
 
         .empty-state i {
             font-size: 60px;
             margin-bottom: 20px;
-            color: #ddd;
+            color: var(--color-text-muted);
         }
 
         .empty-state h3 {
             font-size: 20px;
             margin-bottom: 10px;
-            color: #666;
+            color: var(--color-text);
         }
 
         /* === RESPONSIVE === */
@@ -621,44 +702,54 @@
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
             }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-                padding: 10px 0;
+
+            .conversation-toggle-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
             }
-            
-            .logo, .user-info {
-                display: none;
-            }
-            
-            .nav-links {
-                display: flex;
-                overflow-x: auto;
-                padding: 0 10px;
-            }
-            
-            .nav-links li {
-                flex: 0 0 auto;
-                margin-bottom: 0;
-            }
-            
-            .nav-links a {
-                padding: 10px 15px;
-                border-radius: 20px;
-                margin-right: 5px;
-            }
-            
+
             .messaging-content {
                 flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
             }
-            
+
             .conversations-sidebar {
-                width: 100%;
-                height: 300px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: min(360px, 92vw);
+                max-width: 92vw;
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+                z-index: 1000;
                 border-right: none;
-                border-bottom: 1px solid #eee;
+                border-bottom: none;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+
+            .conversations-sidebar.open {
+                transform: translateX(0);
+            }
+
+            .chat-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+
+            .chat-overlay.open {
+                display: block;
             }
             
             .top-header {
@@ -678,50 +769,14 @@
     </style>
 </head>
 <body>
-    <!-- === SIDEBAR === -->
-    <div class="sidebar">
-        <div class="logo">
-            <i class="fas fa-shopping-bag"></i>
-            <h1>iShopping</h1>
-        </div>
-        
-        <div class="user-info">
-            <div class="user-avatar">FB</div>
-            <div class="user-details">
-                <h3>Fashionista Boutique</h3>
-                <p>En ligne</p>
-            </div>
-        </div>
-        
-        <ul class="nav-links">
-            <li><a href="#"><i class="fas fa-home"></i> <span>Tableau de bord</span></a></li>
-            <li><a href="#"><i class="fas fa-shopping-bag"></i> <span>Produits</span></a></li>
-            <li><a href="#"><i class="fas fa-receipt"></i> <span>Commandes</span></a></li>
-            <li><a href="#" class="active"><i class="fas fa-comments"></i> <span>Messagerie</span></a></li>
-            <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Analytics</span></a></li>
-            <li><a href="#"><i class="fas fa-cog"></i> <span>Paramètres</span></a></li>
-        </ul>
-    </div>
+
+    <div class="chat-overlay" id="chat-overlay"></div>
 
     <!-- === CONTENU PRINCIPAL === -->
     <div class="main-content">
         <!-- Header -->
         <header class="top-header">
-            <div class="search-bar">
-                <input type="text" placeholder="Rechercher une conversation...">
-            </div>
-            <div class="header-actions">
-                <div class="header-action-item">
-                    <div class="notification-wrapper">
-                        <i class="far fa-bell"></i>
-                    </div>
-                    <span>Notifications</span>
-                </div>
-                <div class="header-action-item">
-                    <i class="far fa-question-circle"></i>
-                    <span>Aide</span>
-                </div>
-            </div>
+            
         </header>
 
         <!-- Contenu de la messagerie -->
@@ -730,15 +785,21 @@
             <div class="conversations-sidebar">
                 <div class="conversations-header">
                     <h2>Messages</h2>
-                    <button class="btn btn-primary">Nouveau message</button>
+                    <a class="back-btn" href="<?php echo htmlspecialchars((string)url('home')); ?>" title="Retour">
+                        <i class="fas fa-arrow-left"></i>
+                        Retour
+                    </a>
+                    <!-- <div class="search-bar">
+                        <input type="text" placeholder="Rechercher une conversation...">
+                    </div> -->
+                    <div class="header-actions">
+                        <button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        
+                    </div>
                 </div>
 
-                <div class="conversation-filters">
-                    <button class="filter-btn active">Tous</button>
-                    <button class="filter-btn">Non lus</button>
-                    <button class="filter-btn">Acheteurs</button>
-                    <button class="filter-btn">Boutiques</button>
-                </div>
 
                 <div class="conversations-list">
                     
@@ -748,6 +809,9 @@
             <!-- Zone de discussion -->
             <div class="chat-area">
                 <div class="chat-header">
+                    <button type="button" class="conversation-toggle-btn" id="conversation-toggle-btn" aria-label="Conversations">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <div class="chat-partner">
                         <div class="chat-partner-avatar">
                             <i class="fas fa-user"></i>
@@ -757,12 +821,10 @@
                             <p></p>
                         </div>
                     </div>
-                    <div class="chat-actions">
-                        <button class="chat-action-btn"><i class="fas fa-phone"></i></button>
-                        <button class="chat-action-btn"><i class="fas fa-video"></i></button>
-                        <button class="chat-action-btn"><i class="fas fa-info-circle"></i></button>
-                    </div>
+                    
                 </div>
+
+                <div class="chat-status" style="display:none; padding: 10px 20px; background: var(--color-bg); border-bottom: none; color: var(--color-text-muted);"></div>
 
                 <div class="messages-container">
                     
@@ -770,11 +832,7 @@
 
                 <!-- Zone de saisie -->
                 <div class="message-input-container">
-                    <div class="input-actions">
-                        <button class="input-action-btn"><i class="fas fa-paperclip"></i></button>
-                        <button class="input-action-btn"><i class="fas fa-image"></i></button>
-                        <button class="input-action-btn"><i class="fas fa-smile"></i></button>
-                    </div>
+                    
                     <div class="message-input-wrapper">
                         <textarea class="message-input" placeholder="Tapez votre message..." rows="1"></textarea>
                         <button class="send-btn">
@@ -789,6 +847,49 @@
     <script>
         window.CURRENT_USER_ID = <?php echo (int)($_SESSION['user_id'] ?? 0); ?>;
     </script>
+    <script src="<?php echo htmlspecialchars((string)BASE_URL); ?>/public/js/theme.js"></script>
     <script src="<?php echo htmlspecialchars((string)BASE_URL); ?>/public/js/chat.js"></script>
+    <script>
+        (function(){
+            function qs(sel){ return document.querySelector(sel); }
+            const sidebar = qs('.conversations-sidebar');
+            const overlay = qs('#chat-overlay');
+            const btn = qs('#conversation-toggle-btn');
+            if(!sidebar || !overlay || !btn) return;
+
+            function isMobile(){
+                try { return window.matchMedia('(max-width: 768px)').matches; } catch(e) { return false; }
+            }
+
+            function openSidebar(){
+                sidebar.classList.add('open');
+                overlay.classList.add('open');
+            }
+
+            function closeSidebar(){
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open');
+            }
+
+            btn.addEventListener('click', function(){
+                if(!isMobile()) return;
+                if(sidebar.classList.contains('open')) closeSidebar(); else openSidebar();
+            });
+
+            overlay.addEventListener('click', closeSidebar);
+
+            const list = qs('.conversations-list');
+            if(list){
+                list.addEventListener('click', function(e){
+                    const item = e.target && e.target.closest ? e.target.closest('.conversation-item') : null;
+                    if(item && isMobile()) closeSidebar();
+                });
+            }
+
+            window.addEventListener('resize', function(){
+                if(!isMobile()) closeSidebar();
+            });
+        })();
+    </script>
 </body>
 </html>

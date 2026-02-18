@@ -35,7 +35,7 @@ class Conversation {
                 c.updated_at,
                 s.name AS shop_name,
                 s.user_id AS shop_owner_id,
-                TRIM(COALESCE(u.first_name, \'\') || \' \' || COALESCE(u.last_name, \'\')) AS buyer_name,
+                TRIM(CONCAT(COALESCE(u.first_name, \'\'), \' \', COALESCE(u.last_name, \'\'))) AS buyer_name,
                 u.email AS buyer_email,
                 (SELECT body FROM messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_message,
                 (SELECT created_at FROM messages m WHERE m.conversation_id = c.id ORDER BY m.id DESC LIMIT 1) AS last_message_at

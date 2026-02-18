@@ -97,7 +97,7 @@ require_once __DIR__ . '/../config.php';
                     <form id="loginForm" method="POST" action="<?php echo url('login'); ?>&action=login">
                         <div class="form-group">
                             <label for="email" class="form-label">Adresse e-mail</label>
-                            <input type="email" id="email" name="email" class="form-input <?php echo isset($errors['email']) ? 'error' : ''; ?>" value="<?php echo isset($form_data['email']) ? htmlspecialchars($form_data['email']) : ''; ?>" required>
+                            <input type="email" id="email" name="email" class="form-input <?php echo isset($errors['email']) ? 'error' : ''; ?>" value="<?php echo isset($form_data['email']) ? htmlspecialchars($form_data['email']) : ''; ?>" autocomplete="email" autofocus required>
                             <?php if (isset($errors['email'])): ?>
                                 <span class="error-message"><?php echo htmlspecialchars($errors['email']); ?></span>
                             <?php endif; ?>
@@ -108,7 +108,13 @@ require_once __DIR__ . '/../config.php';
                                 <label for="password">Mot de passe</label>
                                 <a href="#" class="forgot-password">Mot de passe oublié ?</a>
                             </div>
-                            <input type="password" id="password" name="password" class="form-input <?php echo isset($errors['password']) ? 'error' : ''; ?>" required>
+                            <div class="password-field">
+                                <input type="password" id="password" name="password" class="form-input <?php echo isset($errors['password']) ? 'error' : ''; ?>" autocomplete="current-password" required>
+                                <button type="button" class="password-toggle" aria-label="Afficher le mot de passe" aria-pressed="false" data-target="password">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+        
+                            </div>
                             <?php if (isset($errors['password'])): ?>
                                 <span class="error-message"><?php echo htmlspecialchars($errors['password']); ?></span>
                             <?php endif; ?>
@@ -183,6 +189,28 @@ require_once __DIR__ . '/../config.php';
             if (email) {
                 alert(`Un lien de réinitialisation a été envoyé à ${email}`);
             }
+        });
+
+        // Affichage / masquage du mot de passe
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetId = btn.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                if (!input) return;
+
+                const isPassword = input.getAttribute('type') === 'password';
+                input.setAttribute('type', isPassword ? 'text' : 'password');
+                btn.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+                btn.setAttribute('aria-label', isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.add('fa-solid');
+                    icon.classList.remove('fa-regular');
+                    icon.classList.toggle('fa-eye', !isPassword);
+                    icon.classList.toggle('fa-eye-slash', isPassword);
+                }
+            });
         });
     </script>
 </body>

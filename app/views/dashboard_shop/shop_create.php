@@ -2,7 +2,7 @@
 $data = $_SESSION['view_data'] ?? [];
 $error = $data['error'] ?? null;
 $shops = $data['shops'] ?? [];
-$canCreateShop = empty($shops);
+$canCreateShop = is_array($shops) && count($shops) < 4;
 ?>
 
 <?php if ($error): ?>
@@ -17,7 +17,7 @@ $canCreateShop = empty($shops);
 
     <?php if (!$canCreateShop): ?>
         <div style="color: var(--gray-dark);">
-            Pour le moment, un compte ne peut créer qu'une seule boutique.
+            Limite atteinte: un compte ne peut créer que 4 boutiques au maximum.
         </div>
     <?php endif; ?>
 

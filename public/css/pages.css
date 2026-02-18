@@ -291,6 +291,50 @@
     font-size: 20px;
 }
 
+.password-field {
+    position: relative;
+}
+
+.password-field .form-input {
+    position: relative;
+    z-index: 1;
+    padding-right: 44px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all var(--transition-base);
+}
+
+.password-toggle:hover {
+    color: var(--color-text);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .password-toggle:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.password-toggle:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 /* ============================================
    ICONS ET COMPTEURS
    ============================================ */

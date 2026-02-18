@@ -16,6 +16,22 @@ if ((!$mainImage || $mainImage === '') && !empty($images)) {
     $mainImage = $images[0]['image'] ?? null;
 }
 
+$resolveImageUrl = static function ($path): string {
+    $path = trim((string)$path);
+    if ($path === '') {
+        return '';
+    }
+    if (preg_match('/^https?:\/\//i', $path)) {
+        return $path;
+    }
+    if (strpos($path, '/') === 0) {
+        return rtrim((string)BASE_URL, '/') . $path;
+    }
+    return rtrim((string)BASE_URL, '/') . '/' . ltrim($path, '/');
+};
+
+$mainImageUrl = $resolveImageUrl((string)$mainImage);
+
 $price = (float)($product['price'] ?? 0);
 $promo = (float)($product['promo_price'] ?? 0);
 $hasPromo = $promo > 0 && $promo < $price;
@@ -57,8 +73,8 @@ if ($minOrderQty <= 0) {
     <div class="pd-grid">
         <div>
             <div style="border-radius: var(--radius-lg); overflow:hidden; background: var(--color-bg-secondary); box-shadow: var(--shadow-md);">
-                <?php if (!empty($mainImage)): ?>
-                    <img id="pd-main-image" src="<?php echo htmlspecialchars((string)$mainImage); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" style="width:100%; height:520px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
+                <?php if (!empty($mainImageUrl)): ?>
+                    <img id="pd-main-image" src="<?php echo htmlspecialchars((string)$mainImageUrl); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" style="width:100%; height:520px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
                 <?php else: ?>
                     <div style="height:520px; display:flex; align-items:center; justify-content:center; color: var(--color-text-muted);">Aucune image</div>
                 <?php endif; ?>
@@ -66,15 +82,23 @@ if ($minOrderQty <= 0) {
 
             <div style="display:flex; gap: 10px; margin-top: var(--spacing-lg); flex-wrap: wrap;">
                 <button type="button" class="btn btn-primary" onclick="pdOpenQtyModal(<?php echo (int)$product['id']; ?>)">Ajouter au panier</button>
+                <a class="btn btn-ghost" href="<?php echo url('chat'); ?>&shop_id=<?php echo (int)($product['shop_id'] ?? 0); ?>" title="Contacter la boutique">
+                    <i class="fas fa-comment-dots" style="margin-right: 8px;"></i>Contacter
+                </a>
                 <a class="btn btn-ghost" href="<?php echo url('profile_shop'); ?>&id=<?php echo (int)($product['shop_id'] ?? 0); ?>">Voir la boutique</a>
             </div>
 
             <?php if (!empty($images)): ?>
                 <div style="display:flex; gap:10px; margin-top: var(--spacing-md); overflow-x:auto; padding-bottom:6px;">
                     <?php foreach ($images as $img): ?>
-                        <?php if (empty($img['image'])) continue; ?>
-                        <button type="button" style="border: 1px solid rgba(0,0,0,0.08); background: var(--color-bg); padding:0; border-radius:12px; overflow:hidden; width:78px; height:78px; flex:0 0 auto; cursor:pointer;" onclick="document.getElementById('pd-main-image').src='<?php echo htmlspecialchars((string)$img['image']); ?>'">
-                            <img src="<?php echo htmlspecialchars((string)$img['image']); ?>" alt="" style="width:78px; height:78px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
+                        <?php
+                        $thumbImageUrl = $resolveImageUrl((string)($img['image'] ?? ''));
+                        if ($thumbImageUrl === '') {
+                            continue;
+                        }
+                        ?>
+                        <button type="button" style="border: 1px solid rgba(0,0,0,0.08); background: var(--color-bg); padding:0; border-radius:12px; overflow:hidden; width:78px; height:78px; flex:0 0 auto; cursor:pointer;" onclick="document.getElementById('pd-main-image').src=<?php echo htmlspecialchars(json_encode($thumbImageUrl), ENT_QUOTES, 'UTF-8'); ?>">
+                            <img src="<?php echo htmlspecialchars((string)$thumbImageUrl); ?>" alt="" style="width:78px; height:78px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
                         </button>
                     <?php endforeach; ?>
                 </div>

@@ -2,6 +2,16 @@
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   function qs(sel){return document.querySelector(sel);}
   function fmtTime(ts){if(!ts) return ''; const d=new Date(ts.replace(' ','T')); if(isNaN(d.getTime())) return ''; return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
+  function getIntParam(name){
+    try{
+      const u = new URL(window.location.href);
+      const v = u.searchParams.get(name);
+      const n = parseInt(v || '0', 10);
+      return Number.isFinite(n) ? n : 0;
+    } catch(e){
+      return 0;
+    }
+  }
 
   document.addEventListener('DOMContentLoaded', async () => {
     if(!window.APP_URL || !window.CURRENT_USER_ID) return;
@@ -15,10 +25,20 @@
     const apiList = `${window.APP_URL}?page=chat&action=list`;
     const apiPoll = `${window.APP_URL}?page=chat&action=poll`;
     const apiSend = `${window.APP_URL}?page=chat&action=send`;
+    const apiStart = `${window.APP_URL}?page=chat&action=start`;
 
     let activeConversationId = 0;
     let afterId = 0;
     let pollHandle = null;
+    let pollInFlight = false;
+    let renderedMessageIds = new Set();
+
+    function setStatus(msg){
+      const el = qs('.chat-status');
+      if(!el) return;
+      el.textContent = msg || '';
+      el.style.display = msg ? 'block' : 'none';
+    }
 
     function clearActive(){
       listEl.querySelectorAll('.conversation-item').forEach(i=>i.classList.remove('active'));
@@ -32,23 +52,37 @@
     }
 
     function renderMsg(m){
+      const mid = Number(m.id||0);
+      if(mid && renderedMessageIds.has(mid)) return;
       const mine = Number(m.sender_user_id) === Number(window.CURRENT_USER_ID);
       const wrap = document.createElement('div');
       wrap.className = mine ? 'message sent' : 'message received';
       wrap.innerHTML = `<div class="message-text">${esc(m.body||'')}</div><div class="message-time">${fmtTime(m.created_at)}</div>`;
       messagesEl.appendChild(wrap);
-      afterId = Math.max(afterId, Number(m.id||0));
+      if(mid) renderedMessageIds.add(mid);
+      afterId = Math.max(afterId, mid);
     }
 
     async function poll(){
       if(!activeConversationId) return;
+      if(pollInFlight) return;
+      pollInFlight = true;
       try{
         const res = await fetch(apiPoll,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversation_id:activeConversationId,after_id:afterId})});
         const data = await res.json().catch(()=>({}));
-        if(!res.ok || !data.success) return;
+        if(!res.ok || !data.success){
+          setStatus((data && data.error) ? data.error : 'Erreur lors du chargement des messages');
+          return;
+        }
+        setStatus('');
         (data.messages||[]).forEach(renderMsg);
         if((data.messages||[]).length){messagesEl.scrollTop = messagesEl.scrollHeight;}
-      }catch(e){}
+      }catch(e){
+        console.error(e);
+        setStatus('Erreur réseau');
+      }finally{
+        pollInFlight = false;
+      }
     }
 
     function startPolling(){
@@ -59,6 +93,8 @@
     async function openConversation(convId, title, subtitle, el){
       activeConversationId = Number(convId||0);
       afterId = 0;
+      pollInFlight = false;
+      renderedMessageIds = new Set();
       messagesEl.innerHTML = '';
       clearActive();
       if(el) el.classList.add('active');
@@ -69,10 +105,38 @@
     }
 
     async function loadConversations(){
-      const res = await fetch(apiList);
-      const data = await res.json().catch(()=>({}));
-      if(!res.ok || !data.success) return [];
-      return data.conversations||[];
+      try{
+        const res = await fetch(apiList);
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok || !data.success){
+          setStatus((data && data.error) ? data.error : 'Erreur lors du chargement des conversations');
+          return [];
+        }
+        setStatus('');
+        return data.conversations||[];
+      } catch(e){
+        console.error(e);
+        setStatus('Erreur réseau');
+        return [];
+      }
+    }
+
+    async function ensureConversationForShop(shopId){
+      if(!shopId) return 0;
+      try{
+        const res = await fetch(apiStart,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shop_id:shopId})});
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok || !data.success){
+          setStatus((data && data.error) ? data.error : 'Impossible de démarrer la conversation');
+          return 0;
+        }
+        setStatus('');
+        return Number(data.conversation_id||0);
+      }catch(e){
+        console.error(e);
+        setStatus('Erreur réseau');
+        return 0;
+      }
     }
 
     function renderConversationRow(c){
@@ -96,27 +160,55 @@
 
     async function send(){
       const body = (inputEl.value||'').trim();
-      if(!body || !activeConversationId) return;
+      if(!activeConversationId){
+        setStatus('Sélectionne une conversation avant d\'envoyer un message');
+        return;
+      }
+      if(!body){
+        setStatus('Message vide');
+        return;
+      }
       inputEl.value='';
       try{
-        await fetch(apiSend,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversation_id:activeConversationId,body})});
+        const res = await fetch(apiSend,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversation_id:activeConversationId,body})});
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok || !data.success){
+          setStatus((data && data.error) ? data.error : 'Erreur lors de l\'envoi');
+          return;
+        }
+        setStatus('');
         await poll();
         messagesEl.scrollTop = messagesEl.scrollHeight;
-      }catch(e){}
+      }catch(e){
+        console.error(e);
+        setStatus('Erreur réseau');
+      }
     }
 
     inputEl.addEventListener('keydown',(e)=>{if(e.key==='Enter' && !e.shiftKey){e.preventDefault();send();}});
     sendEl.addEventListener('click',send);
 
+    const shopId = getIntParam('shop_id');
+    const forcedConversationId = await ensureConversationForShop(shopId);
+
+    setStatus('');
     const convs = await loadConversations();
     listEl.innerHTML='';
     convs.forEach(c=>listEl.appendChild(renderConversationRow(c)));
-    if(convs[0]){
-      const first = listEl.querySelector('.conversation-item');
-      first && first.click();
-    } else {
-      setHeader('Aucune conversation', '');
-      messagesEl.innerHTML = '';
+
+    if(forcedConversationId){
+      const el = listEl.querySelector(`.conversation-item[data-conversation-id="${forcedConversationId}"]`);
+      el && el.click();
+    }
+
+    if(!forcedConversationId){
+      if(convs[0]){
+        const first = listEl.querySelector('.conversation-item');
+        first && first.click();
+      } else {
+        setHeader('Aucune conversation', '');
+        messagesEl.innerHTML = '';
+      }
     }
   });
 })();
