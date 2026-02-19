@@ -731,6 +731,12 @@ if ($ref !== '') {
                 overflow: hidden;
             }
 
+            .main-content {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+                padding-bottom: max(10px, env(safe-area-inset-bottom));
+            }
+
             .conversation-toggle-btn {
                 display: inline-flex;
                 align-items: center;
@@ -740,6 +746,11 @@ if ($ref !== '') {
             .messaging-content {
                 flex-direction: column;
                 height: 100%;
+                overflow: hidden;
+            }
+
+            .chat-area {
+                border-radius: 14px;
                 overflow: hidden;
             }
 
@@ -771,17 +782,18 @@ if ($ref !== '') {
 
             .conversations-sidebar {
                 position: fixed;
-                top: 0;
-                left: 0;
-                bottom: 0;
-                width: min(360px, 92vw);
-                max-width: 92vw;
+                top: max(8px, env(safe-area-inset-top));
+                left: max(8px, env(safe-area-inset-left));
+                bottom: max(8px, env(safe-area-inset-bottom));
+                width: min(360px, calc(100vw - 16px));
+                max-width: calc(100vw - 16px);
                 transform: translateX(-100%);
                 transition: transform 0.2s ease;
                 z-index: 1000;
                 border-right: none;
                 border-bottom: none;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                border-radius: 14px;
             }
 
             .conversations-sidebar.open {

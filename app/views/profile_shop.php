@@ -38,8 +38,15 @@ $shopBannerUrl = $resolveImageUrl((string)($shop['banner'] ?? ''));
 $shopLogoUrl = $resolveImageUrl((string)($shop['logo'] ?? ''));
 ?>
 
-<main class="main-content container" style="padding-top: var(--spacing-lg);">
+<main class="main-content container shop-main-content" style="padding-top: var(--spacing-lg);">
     <style>
+        @media (max-width: 992px) {
+            .shop-main-content {
+                padding-left: max(clamp(16px, 5.5vw, 28px), env(safe-area-inset-left)) !important;
+                padding-right: max(clamp(16px, 5.5vw, 28px), env(safe-area-inset-right)) !important;
+            }
+        }
+
         .shop-banner { width: 100%; border-radius: 16px; overflow: hidden; background: var(--color-bg-secondary); box-shadow: var(--shadow-md); }
         .shop-banner-media { position: relative; width: 100%; padding-top: 28%; }
         @media (max-width: 900px) { .shop-banner-media { padding-top: 40%; } }

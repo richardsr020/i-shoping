@@ -5,8 +5,18 @@
 require_once __DIR__ . '/../config.php';
 ?>
 
+<style>
+    /* Correctif local: marge latérale visible sur mobile pour la page d'accueil */
+    @media (max-width: 992px) {
+        .home-main-content {
+            padding-left: max(clamp(16px, 5.5vw, 28px), env(safe-area-inset-left)) !important;
+            padding-right: max(clamp(16px, 5.5vw, 28px), env(safe-area-inset-right)) !important;
+        }
+    }
+</style>
+
 <!-- Contenu principal -->
-<main class="main-content container">
+<main class="main-content container home-main-content">
     <div id="products-container" class="products-grid">
         <!-- Les produits seront chargés dynamiquement par JavaScript -->
         <div style="text-align: center; padding: var(--spacing-2xl); color: var(--color-text-muted);">

@@ -253,7 +253,7 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
         .stat-value {
             font-size: 24px;
             font-weight: bold;
-            color: var(--dark);
+            color: var(--color-text);
         }
 
         .stat-change {

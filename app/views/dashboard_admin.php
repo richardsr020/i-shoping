@@ -318,7 +318,11 @@ $revenue = (float)($stats['revenue'] ?? 0);
         .stat-value {
             font-size: 24px;
             font-weight: bold;
-            color: var(--dark);
+            color: var(--color-text, var(--dark));
+        }
+
+        [data-theme="dark"] .stat-value {
+            color: #fff;
         }
 
         .stat-change {

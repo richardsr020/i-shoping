@@ -50,6 +50,13 @@ if ($minOrderQty <= 0) {
 ?>
 
 <style>
+    @media (max-width: 992px) {
+        .pd-main-content {
+            padding-left: max(clamp(16px, 5.5vw, 28px), env(safe-area-inset-left)) !important;
+            padding-right: max(clamp(16px, 5.5vw, 28px), env(safe-area-inset-right)) !important;
+        }
+    }
+
     .pd-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--spacing-2xl); align-items: start; }
     @media (max-width: 900px) { .pd-grid { grid-template-columns: 1fr; } }
 
@@ -65,7 +72,7 @@ if ($minOrderQty <= 0) {
     .pd-qty-close { border: none; background: transparent; color: var(--color-text-muted); cursor: pointer; padding: 6px 8px; }
 </style>
 
-<main class="main-content container" style="padding-top: var(--spacing-lg);">
+<main class="main-content container pd-main-content" style="padding-top: var(--spacing-lg);">
     <div style="margin-bottom: var(--spacing-lg);">
         <a href="<?php echo url('home'); ?>" class="btn btn-ghost btn-sm">Retour</a>
     </div>
