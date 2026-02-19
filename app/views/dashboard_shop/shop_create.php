@@ -29,51 +29,51 @@ $canCreateShop = is_array($shops) && count($shops) < 4;
         </div>
 
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Description</label>
-            <textarea name="description" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd; min-height: 120px;" placeholder="Description..."></textarea>
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Description *</label>
+            <textarea name="description" required style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd; min-height: 120px;" placeholder="Description..."></textarea>
         </div>
 
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Logo</label>
-            <input name="logo_file" type="file" accept="image/*" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff;" />
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Logo *</label>
+            <input name="logo_file" type="file" required accept="image/*" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff;" />
         </div>
 
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Bannière</label>
-            <input name="banner_file" type="file" accept="image/*" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff;" />
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Bannière *</label>
+            <input name="banner_file" type="file" required accept="image/*" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff;" />
         </div>
 
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Email de contact</label>
-            <input name="email_contact" type="email" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="contact@..." />
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Email de contact *</label>
+            <input name="email_contact" required type="email" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="contact@..." />
         </div>
 
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Téléphone</label>
-            <input name="phone" type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="+..." />
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Téléphone *</label>
+            <input name="phone" required type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="+..." />
         </div>
 
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Adresse</label>
-            <input name="address" type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="Adresse" />
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Adresse *</label>
+            <input name="address" required type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="Adresse" />
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Ville</label>
-                <input name="city" type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="Ville" />
+                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Ville *</label>
+                <input name="city" required type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="Ville" />
             </div>
             <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Pays</label>
-                <input name="country" type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="Pays" />
+                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Pays *</label>
+                <input name="country" required type="text" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;" placeholder="Pays" />
             </div>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Devise</label>
+                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Devise *</label>
                 <?php $cur = 'USD'; ?>
-                <select name="currency" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                <select name="currency" required style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;">
                     <?php
                     $currencies = [
                         'XOF','XAF','GHS','NGN','MAD','DZD','TND','EGP','KES','UGX','TZS','RWF','BIF','ZAR','USD','EUR','GBP','CHF','CAD','AUD','NZD','JPY','CNY','HKD','SGD','INR','PKR','BDT','TRY','BRL','ARS','CLP','COP','PEN','MXN','KRW','IDR','MYR','THB','VND','PHP','AED','SAR','QAR','KWD','OMR','BHD','ILS'
@@ -86,8 +86,8 @@ $canCreateShop = is_array($shops) && count($shops) < 4;
                 </select>
             </div>
             <div>
-                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Statut</label>
-                <select name="status" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                <label style="display: block; font-weight: 600; margin-bottom: 6px;">Statut *</label>
+                <select name="status" required style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid #ddd;">
                     <option value="active" selected>Actif</option>
                     <option value="inactive">Inactif</option>
                 </select>
@@ -95,22 +95,22 @@ $canCreateShop = is_array($shops) && count($shops) < 4;
         </div>
 
         <div>
-            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Moyens de paiement acceptés</label>
+            <label style="display: block; font-weight: 600; margin-bottom: 6px;">Moyens de paiement acceptés *</label>
             <div style="display:flex; gap: 12px; flex-wrap: wrap;">
                 <label style="display:flex; align-items:center; gap:8px;">
-                    <input type="checkbox" name="payment_methods[]" value="orange_money" />
+                    <input class="shop-payment-method" type="checkbox" name="payment_methods[]" value="orange_money" />
                     Orange Money
                 </label>
                 <label style="display:flex; align-items:center; gap:8px;">
-                    <input type="checkbox" name="payment_methods[]" value="mpesa" />
+                    <input class="shop-payment-method" type="checkbox" name="payment_methods[]" value="mpesa" />
                     M-Pesa
                 </label>
                 <label style="display:flex; align-items:center; gap:8px;">
-                    <input type="checkbox" name="payment_methods[]" value="airtel_money" />
+                    <input class="shop-payment-method" type="checkbox" name="payment_methods[]" value="airtel_money" />
                     Airtel Money
                 </label>
                 <label style="display:flex; align-items:center; gap:8px;">
-                    <input type="checkbox" name="payment_methods[]" value="crypto_usdt" />
+                    <input class="shop-payment-method" type="checkbox" name="payment_methods[]" value="crypto_usdt" />
                     Crypto USDT
                 </label>
             </div>
@@ -123,3 +123,20 @@ $canCreateShop = is_array($shops) && count($shops) < 4;
     </form>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const inputs = Array.from(document.querySelectorAll('.shop-payment-method'));
+    if (!inputs.length) return;
+
+    const syncRequired = () => {
+        const anyChecked = inputs.some((input) => input.checked);
+        inputs.forEach((input) => {
+            input.required = !anyChecked;
+        });
+    };
+
+    inputs.forEach((input) => input.addEventListener('change', syncRequired));
+    syncRequired();
+});
+</script>

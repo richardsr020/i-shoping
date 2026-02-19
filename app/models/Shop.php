@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config.php';
 
 class Shop {
+    public const CERTIFIED_STARS_THRESHOLD = 85.0;
     private PDO $db;
 
     public function __construct() {
@@ -83,17 +84,46 @@ class Shop {
             throw new Exception('Le nom de la boutique est requis.');
         }
 
-        if ($emailContact !== '' && !filter_var($emailContact, FILTER_VALIDATE_EMAIL)) {
+        if ($description === '') {
+            throw new Exception('La description de la boutique est requise.');
+        }
+        if ($logo === '') {
+            throw new Exception('Le logo de la boutique est requis.');
+        }
+        if ($banner === '') {
+            throw new Exception('La bannière de la boutique est requise.');
+        }
+        if ($emailContact === '') {
+            throw new Exception('L\'email de contact est requis.');
+        }
+        if (!filter_var($emailContact, FILTER_VALIDATE_EMAIL)) {
             throw new Exception('Email de contact invalide.');
+        }
+        if ($phone === '') {
+            throw new Exception('Le téléphone de la boutique est requis.');
+        }
+        if (!preg_match('/^[0-9+()\\-\\.\\s]{6,30}$/', $phone)) {
+            throw new Exception('Téléphone de contact invalide.');
+        }
+        if ($address === '') {
+            throw new Exception('L\'adresse de la boutique est requise.');
+        }
+        if ($city === '') {
+            throw new Exception('La ville de la boutique est requise.');
+        }
+        if ($country === '') {
+            throw new Exception('Le pays de la boutique est requis.');
+        }
+        if ($currency === '') {
+            throw new Exception('La devise de la boutique est requise.');
         }
 
         $allowedStatus = ['active', 'inactive'];
-        if ($status !== '' && !in_array($status, $allowedStatus, true)) {
-            $status = '';
+        if ($status === '') {
+            throw new Exception('Le statut de la boutique est requis.');
         }
-
-        if ($currency === '') {
-            $currency = 'USD';
+        if (!in_array($status, $allowedStatus, true)) {
+            throw new Exception('Statut de boutique invalide.');
         }
 
         if ($paymentMethodsJson !== null) {
@@ -101,12 +131,15 @@ class Shop {
                 $paymentMethodsJson = null;
             } else {
                 $decoded = json_decode($paymentMethodsJson, true);
-                if (!is_array($decoded)) {
+                if (!is_array($decoded) || count($decoded) === 0) {
                     $paymentMethodsJson = null;
                 } else {
                     $paymentMethodsJson = json_encode(array_values($decoded));
                 }
             }
+        }
+        if ($paymentMethodsJson === null) {
+            throw new Exception('Au moins un moyen de paiement est requis.');
         }
 
         $slug = $this->generateUniqueSlug($name);
@@ -131,7 +164,7 @@ class Shop {
             $city !== '' ? $city : null,
             $country !== '' ? $country : null,
             $currency,
-            $status !== '' ? $status : 'active',
+            $status,
             $paymentMethodsJson
         ]);
         $newId = (int)$this->db->lastInsertId();
@@ -293,30 +326,34 @@ class Shop {
 
         $stmt = $this->db->prepare('
             SELECT
-                COUNT(*) AS total,
-                SUM(CASE WHEN paid = 1 THEN 1 ELSE 0 END) AS paid_count,
-                SUM(CASE WHEN satisfied = 1 THEN 1 ELSE 0 END) AS satisfied_count
+                SUM(CASE WHEN satisfied = 1 AND COALESCE(canceled, 0) = 0 THEN 1 ELSE 0 END) AS satisfied_count,
+                SUM(CASE WHEN COALESCE(canceled, 0) = 1 THEN 1 ELSE 0 END) AS canceled_count
             FROM orders
-            WHERE shop_id = ? AND COALESCE(canceled, 0) = 0
+            WHERE shop_id = ?
         ');
         $stmt->execute([$shopId]);
         $row = $stmt->fetch() ?: [];
 
-        $total = (int)($row['total'] ?? 0);
-        if ($total <= 0) {
-            $this->updateStars($shopId, 0.0);
-            return 0.0;
+        $satisfiedCount = (int)($row['satisfied_count'] ?? 0);
+        $canceledCount = (int)($row['canceled_count'] ?? 0);
+
+        // Score (0..100):
+        // +6 points par commande satisfaite, -10 points par commande annulée.
+        // Ainsi, les annulations importantes font redescendre rapidement la note.
+        $score = ($satisfiedCount * 6.0) - ($canceledCount * 10.0);
+        if ($score < 0) {
+            $score = 0.0;
         }
-
-        $paidRate = ((int)($row['paid_count'] ?? 0)) / $total;
-        $satisfiedRate = ((int)($row['satisfied_count'] ?? 0)) / $total;
-
-        // Score (0..100) : pondération simple
-        $score = (0.4 * $paidRate + 0.6 * $satisfiedRate) * 100.0;
+        if ($score > 100) {
+            $score = 100.0;
+        }
         $score = round($score, 2);
         $this->updateStars($shopId, $score);
 
         return $score;
     }
-}
 
+    public static function isCertifiedByStars(float $stars): bool {
+        return $stars >= self::CERTIFIED_STARS_THRESHOLD;
+    }
+}

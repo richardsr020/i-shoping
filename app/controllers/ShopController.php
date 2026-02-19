@@ -45,6 +45,33 @@ class ShopController {
                         throw new Exception('Limite atteinte: un compte ne peut créer que 4 boutiques au maximum.');
                     }
 
+                    $requiredTextFields = [
+                        'name' => 'Le nom de la boutique est requis.',
+                        'description' => 'La description de la boutique est requise.',
+                        'email_contact' => 'L\'email de contact est requis.',
+                        'phone' => 'Le téléphone de la boutique est requis.',
+                        'address' => 'L\'adresse de la boutique est requise.',
+                        'city' => 'La ville de la boutique est requise.',
+                        'country' => 'Le pays de la boutique est requis.',
+                        'currency' => 'La devise de la boutique est requise.',
+                        'status' => 'Le statut de la boutique est requis.',
+                    ];
+                    foreach ($requiredTextFields as $field => $errorMsg) {
+                        if (!isset($_POST[$field]) || trim((string)$_POST[$field]) === '') {
+                            throw new Exception($errorMsg);
+                        }
+                    }
+
+                    $emailContact = trim((string)($_POST['email_contact'] ?? ''));
+                    if (!filter_var($emailContact, FILTER_VALIDATE_EMAIL)) {
+                        throw new Exception('Email de contact invalide.');
+                    }
+
+                    $phone = trim((string)($_POST['phone'] ?? ''));
+                    if (!preg_match('/^[0-9+()\\-\\.\\s]{6,30}$/', $phone)) {
+                        throw new Exception('Téléphone de contact invalide.');
+                    }
+
                     $allowedPaymentMethods = ['orange_money', 'mpesa', 'airtel_money', 'crypto_usdt'];
                     $pm = $_POST['payment_methods'] ?? [];
                     $pmList = [];
@@ -56,16 +83,20 @@ class ShopController {
                             }
                         }
                     }
+                    if (empty($pmList)) {
+                        throw new Exception('Veuillez sélectionner au moins un moyen de paiement.');
+                    }
                     $paymentMethodsJson = !empty($pmList) ? json_encode(array_values($pmList)) : null;
 
-                    $logoPath = null;
-                    if (isset($_FILES['logo_file'])) {
-                        $logoPath = saveUploadedImage($_FILES['logo_file'], 'shops');
+                    if (!isset($_FILES['logo_file']) || (int)($_FILES['logo_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                        throw new Exception('Le logo de la boutique est requis.');
                     }
-                    $bannerPath = null;
-                    if (isset($_FILES['banner_file'])) {
-                        $bannerPath = saveUploadedImage($_FILES['banner_file'], 'shops');
+                    if (!isset($_FILES['banner_file']) || (int)($_FILES['banner_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                        throw new Exception('La bannière de la boutique est requise.');
                     }
+
+                    $logoPath = saveUploadedImage($_FILES['logo_file'], 'shops');
+                    $bannerPath = saveUploadedImage($_FILES['banner_file'], 'shops');
 
                     $shopId = $shopModel->create((int)$_SESSION['user_id'], [
                         'name' => $_POST['name'] ?? '',

@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../app/config.php';
+require_once __DIR__ . '/../app/models/Shop.php';
 
 try {
     $db = getDB();
@@ -31,6 +32,8 @@ try {
     $limit = max(1, min(100, $limit));
     $offset = max(0, $offset);
     
+    $certifiedThreshold = Shop::CERTIFIED_STARS_THRESHOLD;
+
     // Construire la requête
     $query = "
         SELECT 
@@ -38,6 +41,7 @@ try {
             s.name as shop_name,
             s.id as shop_id,
             s.stars as shop_stars,
+            CASE WHEN COALESCE(s.stars, 0) >= " . (float)$certifiedThreshold . " THEN 1 ELSE 0 END as shop_is_certified,
             s.currency as shop_currency,
             u.id as user_id
         FROM products p
@@ -145,6 +149,5 @@ try {
         'message' => $e->getMessage()
     ]);
 }
-
 
 

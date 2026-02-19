@@ -502,6 +502,11 @@ $revenue = (float)($stats['revenue'] ?? 0);
             align-items: center;
         }
 
+        .users-table .table-header,
+        .users-table .table-row {
+            grid-template-columns: 0.6fr 1fr 1.2fr 1.2fr 1fr 1.2fr 2fr;
+        }
+
         .table-row:last-child {
             border-bottom: none;
         }
@@ -875,11 +880,12 @@ $revenue = (float)($stats['revenue'] ?? 0);
                         </form>
                     <?php endif; ?>
 
-                    <div class="shops-table">
+                    <div class="shops-table users-table">
                         <div class="table-header">
                             <div>ID</div>
                             <div>Nom</div>
                             <div>Email</div>
+                            <div>Téléphone boutique</div>
                             <div>Rôles</div>
                             <div>Statut</div>
                             <div>Actions</div>
@@ -888,7 +894,7 @@ $revenue = (float)($stats['revenue'] ?? 0);
                         <?php if (empty($users)): ?>
                             <div class="table-row">
                                 <div style="padding: 14px; color: var(--gray-dark);">Aucun utilisateur.</div>
-                                <div></div><div></div><div></div><div></div>
+                                <div></div><div></div><div></div><div></div><div></div><div></div>
                             </div>
                         <?php else: ?>
                             <?php foreach ($users as $u): ?>
@@ -902,6 +908,19 @@ $revenue = (float)($stats['revenue'] ?? 0);
                                     <div><?php echo (int)($u['id'] ?? 0); ?></div>
                                     <div><?php echo htmlspecialchars($fullName); ?></div>
                                     <div><?php echo htmlspecialchars((string)($u['email'] ?? '')); ?></div>
+                                    <div>
+                                        <?php
+                                        $phones = trim((string)($u['shop_phones'] ?? ''));
+                                        $shopsCount = (int)($u['shops_count'] ?? 0);
+                                        if ($shopsCount > 0 && $phones !== '') {
+                                            echo htmlspecialchars($phones);
+                                        } elseif ($shopsCount > 0) {
+                                            echo '—';
+                                        } else {
+                                            echo '<span style="color: var(--gray-dark);">Aucune boutique</span>';
+                                        }
+                                        ?>
+                                    </div>
                                     <div><?php echo htmlspecialchars((string)($u['roles'] ?? '')); ?></div>
                                     <div><?php echo $ustatus === 'suspended' ? ('Suspendu' . ($untilPretty ? ' jusqu\'au ' . htmlspecialchars($untilPretty) : ' (indéfini)')) : 'Actif'; ?></div>
                                     <div>

@@ -103,6 +103,11 @@ require_once __DIR__ . '/../config.php';
         <div id="notifications-modal-body" class="modal-body">
             <!-- Contenu chargé dynamiquement -->
         </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="homePage.markAllNotificationsAsRead()">
+                Tout marquer lu
+            </button>
+        </div>
     </div>
 </div>
 
@@ -110,4 +115,5 @@ require_once __DIR__ . '/../config.php';
 <script>
     window.BASE_URL = '<?php echo BASE_URL; ?>';
 </script>
+<script src="<?php echo BASE_URL; ?>/public/js/notifications-center.js"></script>
 <script src="<?php echo BASE_URL; ?>/public/js/home.js"></script>

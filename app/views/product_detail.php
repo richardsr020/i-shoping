@@ -69,6 +69,11 @@ $minOrderQty = (int)($product['min_order_qty'] ?? 1);
 if ($minOrderQty <= 0) {
     $minOrderQty = 1;
 }
+$shopStarsPercent = (float)($product['shop_stars'] ?? 0);
+if ($shopStarsPercent < 0) $shopStarsPercent = 0;
+if ($shopStarsPercent > 100) $shopStarsPercent = 100;
+$shopStarsCount = (int)max(0, min(5, round(($shopStarsPercent / 100) * 5)));
+$shopIsCertified = (int)($product['shop_is_certified'] ?? 0) === 1 || $shopStarsPercent >= 85.0;
 ?>
 
 <style>
@@ -239,6 +244,21 @@ if ($minOrderQty <= 0) {
                 <a href="<?php echo url('profile_shop'); ?>&id=<?php echo (int)($product['shop_id'] ?? 0); ?>" style="color: var(--color-primary); font-weight: 800;">
                     <?php echo htmlspecialchars((string)($product['shop_name'] ?? '')); ?>
                 </a>
+            </div>
+            <div style="margin-top: -6px; margin-bottom: var(--spacing-md);">
+                <?php if ($shopIsCertified): ?>
+                    <span class="certified-badge" title="Boutique certifiée">
+                        <i class="fas fa-shield-halved"></i>
+                        <span>Boutique certifiée</span>
+                    </span>
+                <?php else: ?>
+                    <div class="rating" title="<?php echo htmlspecialchars(number_format($shopStarsPercent, 0)); ?>%">
+                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                            <span class="star <?php echo $i <= $shopStarsCount ? 'filled' : ''; ?>"><i class="fas fa-star"></i></span>
+                        <?php endfor; ?>
+                        <span style="margin-left: 8px; font-size: 12px; color: var(--color-text-muted);"><?php echo htmlspecialchars(number_format($shopStarsPercent, 0)); ?>%</span>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <?php if (!empty($product['shop_email_contact']) || !empty($product['shop_phone'])): ?>

@@ -7,7 +7,8 @@ class HomePage {
     constructor() {
         this.products = [];
         this.cart = this.loadCart();
-        this.notifications = this.loadNotifications();
+        this.notifications = [];
+        this.notificationCenter = null;
         this.filters = {
             category: null,
             minPrice: null,
@@ -25,6 +26,7 @@ class HomePage {
         this.loadProducts();
         this.updateCartBadge();
         this.updateNotificationBadge();
+        this.initNotificationCenter();
     }
 
     initSearchBar() {
@@ -121,7 +123,7 @@ class HomePage {
         });
         
         bindClick('menu-notifications', () => {
-            window.location.href = `${window.BASE_URL}/index.php?page=dashboard_shop&tab=notifications`;
+            this.openNotificationsModal();
         });
         
         bindClick('menu-add', () => {
@@ -172,8 +174,14 @@ class HomePage {
             const viewUrl = `${window.BASE_URL}/index.php?page=product_detail&id=${product.id}`;
             const img = this.resolveImage(product.image);
             const starsPercent = Number(product.shop_stars || 0);
+            const isCertified = Number(product.shop_is_certified || 0) === 1 || starsPercent >= 85;
             const starsCount = Math.max(0, Math.min(5, Math.round((starsPercent / 100) * 5)));
-            const starsHtml = `
+            const trustHtml = isCertified ? `
+                <div class="certified-badge" title="Boutique certifiee">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>Boutique certifiee</span>
+                </div>
+            ` : `
                 <div class="rating" title="${starsPercent.toFixed(0)}%">
                     ${[1,2,3,4,5].map(i => `<span class="star ${i <= starsCount ? 'filled' : ''}"><i class="fas fa-star"></i></span>`).join('')}
                 </div>
@@ -185,7 +193,7 @@ class HomePage {
                         <img src="${img}" alt="${this.escapeHtml(product.name)}" class="product-image" onerror="this.src='https://via.placeholder.com/300'">
                     </a>
                     <div class="product-info">
-                        ${starsHtml}
+                        ${trustHtml}
                         <h3 class="product-name" title="${this.escapeHtml(product.name)}">${this.escapeHtml(product.name)}</h3>
                         <p class="text-muted" style="font-size: 14px; margin-bottom: var(--spacing-xs);">${this.escapeHtml(product.shop_name || '')}</p>
                         <p class="text-muted" style="font-size: 12px; margin-bottom: var(--spacing-xs);">
@@ -408,26 +416,49 @@ class HomePage {
     // ============================================
     // NOTIFICATIONS
     // ============================================
-    loadNotifications() {
-        const notifications = localStorage.getItem('notifications');
-        return notifications ? JSON.parse(notifications) : [];
+    initNotificationCenter() {
+        if (typeof window.NotificationCenter !== 'function') return;
+        this.notificationCenter = new window.NotificationCenter({
+            baseUrl: window.BASE_URL,
+            scope: 'auto',
+            limit: 100,
+            pollIntervalMs: 10000,
+            onUpdate: (state) => {
+                this.notifications = Array.isArray(state.notifications) ? state.notifications : [];
+                this.updateNotificationBadge(Number(state.counts?.unread_total || 0));
+
+                const modal = document.getElementById('notifications-modal');
+                if (modal && modal.classList.contains('active')) {
+                    this.renderNotificationsModal();
+                }
+            },
+            onError: (error) => {
+                console.error('Notifications API error:', error);
+            }
+        });
+        this.notificationCenter.start();
     }
-    
-    saveNotifications() {
-        localStorage.setItem('notifications', JSON.stringify(this.notifications));
-        this.updateNotificationBadge();
-    }
-    
-    updateNotificationBadge() {
+
+    updateNotificationBadge(unreadCount = null) {
         const badge = document.querySelector('#menu-notifications .badge');
-        const unreadCount = this.notifications.filter(n => !n.read).length;
+        const count = unreadCount === null
+            ? this.notifications.filter((n) => !n.is_read).length
+            : Math.max(0, Number(unreadCount || 0));
+
         if (badge) {
-            badge.textContent = unreadCount > 0 ? unreadCount : '';
-            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+            badge.textContent = count > 0 ? String(count) : '';
+            badge.style.display = count > 0 ? 'flex' : 'none';
         }
     }
     
-    openNotificationsModal() {
+    async openNotificationsModal() {
+        if (this.notificationCenter) {
+            try {
+                await this.notificationCenter.refresh({ playSound: false });
+            } catch (e) {
+                console.error('Impossible de charger les notifications:', e);
+            }
+        }
         this.renderNotificationsModal();
         document.getElementById('notifications-modal').classList.add('active');
     }
@@ -444,35 +475,61 @@ class HomePage {
         modalBody.innerHTML = `
             <div class="notification-list">
                 ${this.notifications.map(notif => `
-                    <div class="notification-item ${notif.read ? '' : 'unread'}" onclick="homePage.markNotificationAsRead(${notif.id})">
+                    <div class="notification-item ${notif.is_read ? '' : 'unread'}" onclick="homePage.markNotificationAsRead(${notif.id})">
                         <div class="notification-title">${this.escapeHtml(notif.title)}</div>
-                        <div class="notification-message">${this.escapeHtml(notif.message)}</div>
-                        <div class="notification-time">${this.formatTime(notif.time)}</div>
+                        <div class="notification-message">${this.escapeHtml(notif.body || notif.type || '')}</div>
+                        <div class="notification-time">${this.formatTime(notif.created_at)}</div>
                     </div>
                 `).join('')}
             </div>
         `;
     }
     
-    markNotificationAsRead(id) {
-        const notif = this.notifications.find(n => n.id === id);
-        if (notif) {
-            notif.read = true;
-            this.saveNotifications();
-            this.renderNotificationsModal();
+    async markNotificationAsRead(id) {
+        if (!this.notificationCenter) return;
+        try {
+            await this.notificationCenter.markRead([id]);
+        } catch (e) {
+            console.error('Erreur markNotificationAsRead:', e);
+        }
+    }
+
+    async markAllNotificationsAsRead() {
+        if (!this.notificationCenter) return;
+        try {
+            await this.notificationCenter.markAllRead();
+        } catch (e) {
+            console.error('Erreur markAllNotificationsAsRead:', e);
         }
     }
     
     showNotification(message) {
-        const notification = {
-            id: Date.now(),
-            title: 'Notification',
-            message: message,
-            time: new Date().toISOString(),
-            read: false
-        };
-        this.notifications.unshift(notification);
-        this.saveNotifications();
+        let toast = document.getElementById('home-page-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'home-page-toast';
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '2001';
+            toast.style.maxWidth = '320px';
+            toast.style.padding = '10px 14px';
+            toast.style.borderRadius = '10px';
+            toast.style.background = 'rgba(30, 144, 255, 0.95)';
+            toast.style.color = '#fff';
+            toast.style.fontWeight = '700';
+            toast.style.boxShadow = '0 8px 24px rgba(0,0,0,0.18)';
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 180ms ease';
+            document.body.appendChild(toast);
+        }
+
+        toast.textContent = String(message || '');
+        toast.style.opacity = '1';
+        window.clearTimeout(this.toastTimer);
+        this.toastTimer = window.setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 2200);
     }
     
     // ============================================
@@ -506,7 +563,12 @@ class HomePage {
     }
     
     formatTime(timeString) {
-        const date = new Date(timeString);
+        const raw = String(timeString || '').trim();
+        const normalized = raw.includes(' ') && !raw.includes('T')
+            ? raw.replace(' ', 'T')
+            : raw;
+        const date = new Date(normalized);
+        if (Number.isNaN(date.getTime())) return '';
         const now = new Date();
         const diff = now - date;
         const minutes = Math.floor(diff / 60000);

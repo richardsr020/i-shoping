@@ -155,11 +155,16 @@ class AdminController {
                     u.status,
                     u.suspended_until,
                     u.created_at,
-                    COALESCE(GROUP_CONCAT(r.name SEPARATOR ", "), \'\') AS roles
+                    COALESCE(GROUP_CONCAT(DISTINCT r.name ORDER BY r.level ASC SEPARATOR ", "), \'\') AS roles,
+                    MAX(CASE WHEN r.name = \'super_admin\' THEN 1 ELSE 0 END) AS has_super_admin_role,
+                    COUNT(DISTINCT s.id) AS shops_count,
+                    COALESCE(GROUP_CONCAT(DISTINCT NULLIF(TRIM(s.phone), \'\') SEPARATOR \' / \'), \'\') AS shop_phones
                 FROM users u
                 LEFT JOIN user_roles ur ON ur.user_id = u.id
                 LEFT JOIN roles r ON r.id = ur.role_id
+                LEFT JOIN shops s ON s.user_id = u.id
                 GROUP BY u.id
+                HAVING has_super_admin_role = 0
                 ORDER BY u.created_at DESC
                 LIMIT 200
             ');

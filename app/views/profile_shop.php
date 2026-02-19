@@ -36,6 +36,11 @@ $resolveImageUrl = static function ($path): string {
 
 $shopBannerUrl = $resolveImageUrl((string)($shop['banner'] ?? ''));
 $shopLogoUrl = $resolveImageUrl((string)($shop['logo'] ?? ''));
+$shopStarsPercent = (float)($shop['stars'] ?? 0);
+if ($shopStarsPercent < 0) $shopStarsPercent = 0;
+if ($shopStarsPercent > 100) $shopStarsPercent = 100;
+$shopStarsCount = (int)max(0, min(5, round(($shopStarsPercent / 100) * 5)));
+$shopIsCertified = $shopStarsPercent >= 85.0;
 ?>
 
 <main class="main-content container shop-main-content" style="padding-top: var(--spacing-lg);">
@@ -74,6 +79,21 @@ $shopLogoUrl = $resolveImageUrl((string)($shop['logo'] ?? ''));
         </div>
         <div style="flex: 1; min-width: 240px;">
             <h1 style="margin:0; font-size: 28px; line-height: 1.2;"><?php echo htmlspecialchars((string)$shop['name']); ?></h1>
+            <div style="margin-top: 8px;">
+                <?php if ($shopIsCertified): ?>
+                    <span class="certified-badge" title="Boutique certifiée">
+                        <i class="fas fa-shield-halved"></i>
+                        <span>Boutique certifiée</span>
+                    </span>
+                <?php else: ?>
+                    <div class="rating" title="<?php echo htmlspecialchars(number_format($shopStarsPercent, 0)); ?>%">
+                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                            <span class="star <?php echo $i <= $shopStarsCount ? 'filled' : ''; ?>"><i class="fas fa-star"></i></span>
+                        <?php endfor; ?>
+                        <span style="margin-left: 8px; font-size: 12px; color: var(--color-text-muted);"><?php echo htmlspecialchars(number_format($shopStarsPercent, 0)); ?>%</span>
+                    </div>
+                <?php endif; ?>
+            </div>
             <?php if (!empty($shop['description'])): ?>
                 <?php
                 $descRaw = (string)$shop['description'];
@@ -139,6 +159,18 @@ $shopLogoUrl = $resolveImageUrl((string)($shop['logo'] ?? ''));
                         <img class="product-image" src="<?php echo htmlspecialchars((string)$productImageSrc); ?>" alt="<?php echo htmlspecialchars((string)$p['name']); ?>" onerror="this.src='https://via.placeholder.com/300'" />
                     </a>
                     <div class="product-info">
+                        <?php if ($shopIsCertified): ?>
+                            <span class="certified-badge" title="Boutique certifiée">
+                                <i class="fas fa-shield-halved"></i>
+                                <span>Boutique certifiée</span>
+                            </span>
+                        <?php else: ?>
+                            <div class="rating" title="<?php echo htmlspecialchars(number_format($shopStarsPercent, 0)); ?>%">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <span class="star <?php echo $i <= $shopStarsCount ? 'filled' : ''; ?>"><i class="fas fa-star"></i></span>
+                                <?php endfor; ?>
+                            </div>
+                        <?php endif; ?>
                         <h3 class="product-name" title="<?php echo htmlspecialchars((string)$p['name']); ?>"><?php echo htmlspecialchars((string)$p['name']); ?></h3>
                         <?php
                         $price = (float)($p['price'] ?? 0);

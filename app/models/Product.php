@@ -1,6 +1,7 @@
 
 <?php
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/Shop.php';
 
 class Product {
     private PDO $db;
@@ -24,6 +25,7 @@ class Product {
     }
 
     public function findPublicById(int $productId): ?array {
+        $certifiedThreshold = (float)Shop::CERTIFIED_STARS_THRESHOLD;
         $stmt = $this->db->prepare('
             SELECT
                 p.*,
@@ -33,6 +35,8 @@ class Product {
                 s.logo AS shop_logo,
                 s.banner AS shop_banner,
                 s.currency AS shop_currency,
+                s.stars AS shop_stars,
+                CASE WHEN COALESCE(s.stars, 0) >= ' . $certifiedThreshold . ' THEN 1 ELSE 0 END AS shop_is_certified,
                 s.payment_methods_json AS shop_payment_methods_json
             FROM products p
             INNER JOIN shops s ON s.id = p.shop_id

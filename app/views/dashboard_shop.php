@@ -135,6 +135,8 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
             padding: 12px 20px;
             color: var(--color-text-muted);
             transition: all 0.3s;
+            gap: 8px;
+            position: relative;
         }
 
         .nav-links a:hover, .nav-links a.active {
@@ -147,6 +149,22 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
             margin-right: 10px;
             width: 20px;
             text-align: center;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: #e53935;
+            color: #fff;
+            font-size: 11px;
+            line-height: 1;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
         }
 
         /* === CONTENU PRINCIPAL === */
@@ -191,6 +209,35 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .user-menu .notifications {
+            position: relative;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--dashboard-border);
+        }
+
+        .user-menu .notifications-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 999px;
+            background: #e53935;
+            color: #fff;
+            font-size: 10px;
+            line-height: 1;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
         }
 
         .user-avatar {
@@ -397,6 +444,15 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
             margin-top: 30px;
         }
 
+        .dashboard-notification-item {
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .dashboard-notification-item.unread {
+            border-left: 4px solid var(--primary) !important;
+            background: rgba(30, 144, 255, 0.08);
+        }
+
         .action-card {
             background: var(--dashboard-surface);
             border-radius: 8px;
@@ -509,10 +565,22 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
         <ul class="nav-links">
             <li><a href="<?php echo url('home'); ?>"><i class="fas fa-arrow-left"></i> Accueil</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=overview" class="<?php echo $tab === 'overview' ? 'active' : ''; ?>"><i class="fas fa-home"></i> Tableau de bord</a></li>
-            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=notifications" class="<?php echo $tab === 'notifications' ? 'active' : ''; ?>"><i class="fas fa-bell"></i> Notifications</a></li>
+            <li>
+                <a href="<?php echo $dashboardBaseUrl; ?>&tab=notifications" class="<?php echo $tab === 'notifications' ? 'active' : ''; ?>">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    <span id="dashboard-notifications-badge" class="nav-badge" style="display:none;"></span>
+                </a>
+            </li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=shops" class="<?php echo $tab === 'shops' ? 'active' : ''; ?>"><i class="fas fa-store"></i> Mes boutiques</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=products" class="<?php echo $tab === 'products' ? 'active' : ''; ?>"><i class="fas fa-shopping-bag"></i> Produits</a></li>
-            <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=orders" class="<?php echo $tab === 'orders' ? 'active' : ''; ?>"><i class="fas fa-receipt"></i> Commandes</a></li>
+            <li>
+                <a href="<?php echo $dashboardBaseUrl; ?>&tab=orders" class="<?php echo $tab === 'orders' ? 'active' : ''; ?>">
+                    <i class="fas fa-receipt"></i>
+                    <span>Commandes</span>
+                    <span id="dashboard-orders-badge" class="nav-badge" style="display:none;"></span>
+                </a>
+            </li>
             <li><a href="<?php echo url('chat'); ?>"><i class="fas fa-comments"></i> Messagerie</a></li>
             <li><a href="<?php echo $dashboardBaseUrl; ?>&tab=settings" class="<?php echo $tab === 'settings' ? 'active' : ''; ?>"><i class="fas fa-cog"></i> Paramètres</a></li>
         </ul>
@@ -528,6 +596,7 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
                 </button>
                 <div class="notifications">
                     <i class="far fa-bell"></i>
+                    <span id="dashboard-header-notifications-badge" class="notifications-badge" style="display:none;"></span>
                 </div>
                 <div class="user-info">
                     <div class="user-avatar">
@@ -569,7 +638,107 @@ $activeShopName = is_array($activeShop) && !empty($activeShop['name']) ? (string
         </div>
     </div>
 
+    <script>
+        window.BASE_URL = '<?php echo BASE_URL; ?>';
+    </script>
     <script src="<?php echo BASE_URL; ?>/public/js/theme.js"></script>
+    <script src="<?php echo BASE_URL; ?>/public/js/notifications-center.js"></script>
     <script src="<?php echo BASE_URL; ?>/public/js/app.js"></script>
+    <script>
+        (function () {
+            if (typeof window.NotificationCenter !== 'function') return;
+
+            const currentTab = <?php echo json_encode((string)$tab); ?>;
+            const badgeNotifications = document.getElementById('dashboard-notifications-badge');
+            const badgeOrders = document.getElementById('dashboard-orders-badge');
+            const headerBadge = document.getElementById('dashboard-header-notifications-badge');
+            const listEl = document.getElementById('dashboard-notification-list');
+            const markAllBtn = document.getElementById('dashboard-mark-all-read');
+            const emptyElId = 'dashboard-notification-empty';
+
+            const esc = (text) => {
+                const div = document.createElement('div');
+                div.textContent = text || '';
+                return div.innerHTML;
+            };
+
+            const setBadge = (el, value) => {
+                if (!el) return;
+                const count = Math.max(0, Number(value || 0));
+                el.textContent = count > 0 ? String(count) : '';
+                el.style.display = count > 0 ? 'inline-flex' : 'none';
+            };
+
+            const center = new window.NotificationCenter({
+                baseUrl: window.BASE_URL,
+                scope: 'shop',
+                limit: 100,
+                pollIntervalMs: 10000,
+                onUpdate: (state) => {
+                    setBadge(badgeNotifications, state.counts.unread_total);
+                    setBadge(headerBadge, state.counts.unread_total);
+                    setBadge(badgeOrders, state.counts.unread_orders);
+
+                    if (currentTab === 'notifications' && listEl) {
+                        renderNotificationList(state.notifications);
+                    }
+                },
+                onError: (error) => {
+                    console.error('Dashboard notifications error:', error);
+                }
+            });
+
+            const renderNotificationList = (items) => {
+                if (!listEl) return;
+                const notifications = Array.isArray(items) ? items : [];
+                if (notifications.length === 0) {
+                    listEl.innerHTML = `<div id="${emptyElId}" style="color: var(--gray-dark);">Aucune notification.</div>`;
+                    return;
+                }
+
+                listEl.innerHTML = notifications.map((n) => {
+                    const unreadClass = n.is_read ? '' : 'unread';
+                    const time = esc(center.formatRelativeTime(n.created_at));
+                    return `
+                        <article
+                            class="dashboard-notification-item ${unreadClass}"
+                            data-notification-id="${Number(n.id || 0)}"
+                            style="border:1px solid var(--dashboard-border);border-radius:10px;padding:12px;cursor:pointer;"
+                        >
+                            <div style="font-weight:800;">${esc(n.title)}</div>
+                            ${n.body ? `<div style="color: var(--gray-dark);font-size:13px;margin-top:4px;">${esc(n.body)}</div>` : ''}
+                            <div style="color: var(--gray-dark);font-size:12px;margin-top:6px;">${esc(n.type)}${time ? ` · ${time}` : ''}</div>
+                        </article>
+                    `;
+                }).join('');
+            };
+
+            if (listEl) {
+                listEl.addEventListener('click', async (event) => {
+                    const card = event.target.closest('[data-notification-id]');
+                    if (!card) return;
+                    const id = Number(card.getAttribute('data-notification-id') || 0);
+                    if (id <= 0) return;
+                    try {
+                        await center.markRead([id]);
+                    } catch (e) {
+                        console.error('Erreur markRead notification:', e);
+                    }
+                });
+            }
+
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', async () => {
+                    try {
+                        await center.markAllRead();
+                    } catch (e) {
+                        console.error('Erreur markAllRead notifications:', e);
+                    }
+                });
+            }
+
+            center.start();
+        })();
+    </script>
 </body>
 </html>
