@@ -46,6 +46,7 @@ if ($ref !== '') {
             --success: #28a745;
             --warning: #ffc107;
             --danger: #dc3545;
+            --chat-vvh: 100dvh;
         }
 
         body {
@@ -54,7 +55,7 @@ if ($ref !== '') {
             line-height: 1.6;
             display: flex;
             height: 100vh;
-            height: 100dvh;
+            height: var(--chat-vvh, 100dvh);
             overflow: hidden;
         }
 
@@ -429,6 +430,9 @@ if ($ref !== '') {
             background-color: var(--color-bg-secondary);
             min-width: 0;
             min-height: 0;
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
         }
 
         .chat-overlay {
@@ -522,13 +526,15 @@ if ($ref !== '') {
         }
 
         .messages-container {
-            flex: 1;
+            flex: 1 1 auto;
             padding: 20px;
             overflow-y: auto;
             min-height: 0;
             display: flex;
             flex-direction: column;
             gap: 12px;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
         }
 
         .message {
@@ -538,6 +544,8 @@ if ($ref !== '') {
             font-size: 14px;
             line-height: 1.4;
             margin: 0 4px;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .message.sent {
@@ -577,11 +585,16 @@ if ($ref !== '') {
 
         /* Zone de saisie */
         .message-input-container {
+            flex: 0 0 auto;
             padding: 20px;
             background-color: var(--color-bg);
             border-top: none;
             width: 100%;
             min-width: 0;
+            position: sticky;
+            bottom: 0;
+            z-index: 6;
+            box-shadow: 0 -6px 16px rgba(0,0,0,0.08);
         }
 
         .input-actions {
@@ -625,6 +638,7 @@ if ($ref !== '') {
             color: var(--color-text);
             width: 100%;
             min-width: 0;
+            max-height: 140px;
         }
 
         .message-input:focus {
@@ -727,7 +741,7 @@ if ($ref !== '') {
             body {
                 flex-direction: column;
                 height: 100vh;
-                height: 100dvh;
+                height: var(--chat-vvh, 100dvh);
                 overflow: hidden;
             }
 
@@ -912,6 +926,40 @@ if ($ref !== '') {
     </script>
     <script src="<?php echo htmlspecialchars((string)BASE_URL); ?>/public/js/theme.js"></script>
     <script src="<?php echo htmlspecialchars((string)BASE_URL); ?>/public/js/chat.js"></script>
+    <script>
+        (function(){
+            const root = document.documentElement;
+            let rafId = 0;
+
+            function applyViewportHeight(){
+                rafId = 0;
+                const vv = window.visualViewport;
+                const height = vv ? vv.height : window.innerHeight;
+                const safeHeight = Math.max(320, Math.round(height || 0));
+                root.style.setProperty('--chat-vvh', safeHeight + 'px');
+            }
+
+            function scheduleApply(){
+                if(rafId) return;
+                rafId = window.requestAnimationFrame(applyViewportHeight);
+            }
+
+            applyViewportHeight();
+            window.addEventListener('resize', scheduleApply, { passive: true });
+            window.addEventListener('orientationchange', scheduleApply);
+
+            if(window.visualViewport){
+                window.visualViewport.addEventListener('resize', scheduleApply);
+                window.visualViewport.addEventListener('scroll', scheduleApply);
+            }
+
+            const input = document.querySelector('.message-input');
+            if(input){
+                input.addEventListener('focus', function(){ setTimeout(scheduleApply, 60); });
+                input.addEventListener('blur', function(){ setTimeout(scheduleApply, 60); });
+            }
+        })();
+    </script>
     <script>
         (function(){
             function qs(sel){ return document.querySelector(sel); }
