@@ -45,10 +45,24 @@ class Message {
             LIMIT ' . (int)$limit . '
         ');
         $stmt->execute([$conversationId, $afterId]);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $meta = [];
+            $rawMeta = (string)($row['meta_json'] ?? '');
+            if ($rawMeta !== '') {
+                $decoded = json_decode($rawMeta, true);
+                if (is_array($decoded)) {
+                    $meta = $decoded;
+                }
+            }
+            $row['meta'] = $meta;
+            unset($row['meta_json']);
+        }
+        unset($row);
+        return $rows;
     }
 
-    public function send(int $conversationId, int $senderUserId, string $body): int {
+    public function send(int $conversationId, int $senderUserId, string $body, array $meta = []): int {
         $body = $this->sanitizeBody($body);
         if ($conversationId <= 0 || $senderUserId <= 0) {
             throw new Exception('Paramètres invalides.');
@@ -61,8 +75,19 @@ class Message {
             throw new Exception('Message trop long.');
         }
 
-        $ins = $this->db->prepare('INSERT INTO messages (conversation_id, sender_user_id, body) VALUES (?, ?, ?)');
-        $ins->execute([$conversationId, $senderUserId, $body]);
+        $metaJson = null;
+        if (!empty($meta)) {
+            $metaJson = json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if (!is_string($metaJson)) {
+                throw new Exception('Métadonnées du message invalides.');
+            }
+            if (strlen($metaJson) > 6000) {
+                throw new Exception('Métadonnées du message trop volumineuses.');
+            }
+        }
+
+        $ins = $this->db->prepare('INSERT INTO messages (conversation_id, sender_user_id, body, meta_json) VALUES (?, ?, ?, ?)');
+        $ins->execute([$conversationId, $senderUserId, $body, $metaJson]);
 
         $conv = new Conversation();
         $conv->touch($conversationId);

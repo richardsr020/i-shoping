@@ -425,14 +425,20 @@ if ($ref !== '') {
         /* Zone de discussion */
         .chat-area {
             flex: 1;
-            display: grid;
-            grid-template-rows: auto auto minmax(0, 1fr) auto;
+            display: flex;
+            flex-direction: column;
             background-color: var(--color-bg-secondary);
             min-width: 0;
             min-height: 0;
             height: 100%;
             max-height: 100%;
             overflow: hidden;
+        }
+
+        .chat-header,
+        .chat-status,
+        .message-input-container {
+            flex: 0 0 auto;
         }
 
         .chat-overlay {
@@ -527,6 +533,8 @@ if ($ref !== '') {
 
         .messages-container {
             flex: 1 1 auto;
+            height: 0;
+            max-height: 100%;
             padding: 20px;
             overflow-y: auto;
             min-height: 0;
@@ -585,7 +593,6 @@ if ($ref !== '') {
 
         /* Zone de saisie */
         .message-input-container {
-            flex: 0 0 auto;
             padding: 20px;
             background-color: var(--color-bg);
             border-top: none;
@@ -594,6 +601,39 @@ if ($ref !== '') {
             position: relative;
             z-index: 2;
             box-shadow: 0 -6px 16px rgba(0,0,0,0.08);
+        }
+
+        .message-product {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 6px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.06);
+        }
+
+        .message.sent .message-product {
+            background: rgba(255,255,255,0.18);
+        }
+
+        .message-product-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex: 0 0 50px;
+        }
+
+        .message-product-name {
+            font-size: 12px;
+            line-height: 1.25;
+            font-weight: 700;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
         }
 
         .input-actions {

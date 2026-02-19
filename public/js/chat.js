@@ -1,5 +1,6 @@
 (function(){
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function escAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
   function qs(sel){return document.querySelector(sel);}
   function fmtTime(ts){if(!ts) return ''; const d=new Date(ts.replace(' ','T')); if(isNaN(d.getTime())) return ''; return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
   function getIntParam(name){
@@ -26,12 +27,14 @@
     const apiPoll = `${window.APP_URL}?page=chat&action=poll`;
     const apiSend = `${window.APP_URL}?page=chat&action=send`;
     const apiStart = `${window.APP_URL}?page=chat&action=start`;
+    const requestedShopId = getIntParam('shop_id');
 
     let activeConversationId = 0;
     let afterId = 0;
     let pollHandle = null;
     let pollInFlight = false;
     let renderedMessageIds = new Set();
+    let pendingProductId = requestedShopId > 0 ? getIntParam('product_id') : 0;
 
     function setStatus(msg){
       const el = qs('.chat-status');
@@ -55,9 +58,15 @@
       const mid = Number(m.id||0);
       if(mid && renderedMessageIds.has(mid)) return;
       const mine = Number(m.sender_user_id) === Number(window.CURRENT_USER_ID);
+      const product = (m && m.meta && m.meta.product && typeof m.meta.product === 'object') ? m.meta.product : null;
+      const productImage = product && product.image ? String(product.image).trim() : '';
+      const productName = product && product.name ? String(product.name).trim() : 'Produit';
+      const productHtml = productImage !== ''
+        ? `<div class="message-product"><img class="message-product-thumb" src="${escAttr(productImage)}" alt="${escAttr(productName)}"><div class="message-product-name">${esc(productName)}</div></div>`
+        : '';
       const wrap = document.createElement('div');
       wrap.className = mine ? 'message sent' : 'message received';
-      wrap.innerHTML = `<div class="message-text">${esc(m.body||'')}</div><div class="message-time">${fmtTime(m.created_at)}</div>`;
+      wrap.innerHTML = `${productHtml}<div class="message-text">${esc(m.body||'')}</div><div class="message-time">${fmtTime(m.created_at)}</div>`;
       messagesEl.appendChild(wrap);
       if(mid) renderedMessageIds.add(mid);
       afterId = Math.max(afterId, mid);
@@ -170,11 +179,18 @@
       }
       inputEl.value='';
       try{
-        const res = await fetch(apiSend,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({conversation_id:activeConversationId,body})});
+        const payload = {conversation_id:activeConversationId,body};
+        if(pendingProductId > 0){
+          payload.product_id = pendingProductId;
+        }
+        const res = await fetch(apiSend,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         const data = await res.json().catch(()=>({}));
         if(!res.ok || !data.success){
           setStatus((data && data.error) ? data.error : 'Erreur lors de l\'envoi');
           return;
+        }
+        if(payload.product_id){
+          pendingProductId = 0;
         }
         setStatus('');
         await poll();

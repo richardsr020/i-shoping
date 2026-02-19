@@ -89,7 +89,7 @@ if ($minOrderQty <= 0) {
 
             <div style="display:flex; gap: 10px; margin-top: var(--spacing-lg); flex-wrap: wrap;">
                 <button type="button" class="btn btn-primary" onclick="pdOpenQtyModal(<?php echo (int)$product['id']; ?>)">Ajouter au panier</button>
-                <a class="btn btn-ghost" href="<?php echo url('chat'); ?>&shop_id=<?php echo (int)($product['shop_id'] ?? 0); ?>" title="Contacter la boutique">
+                <a class="btn btn-ghost" href="<?php echo url('chat'); ?>&shop_id=<?php echo (int)($product['shop_id'] ?? 0); ?>&product_id=<?php echo (int)($product['id'] ?? 0); ?>" title="Contacter la boutique">
                     <i class="fas fa-comment-dots" style="margin-right: 8px;"></i>Contacter
                 </a>
                 <a class="btn btn-ghost" href="<?php echo url('profile_shop'); ?>&id=<?php echo (int)($product['shop_id'] ?? 0); ?>">Voir la boutique</a>

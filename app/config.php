@@ -193,6 +193,9 @@ function initDatabase($db) {
                 'satisfied' => 'ALTER TABLE orders ADD COLUMN satisfied TINYINT(1) NOT NULL DEFAULT 0',
                 'canceled' => 'ALTER TABLE orders ADD COLUMN canceled TINYINT(1) NOT NULL DEFAULT 0',
             ],
+            'messages' => [
+                'meta_json' => 'ALTER TABLE messages ADD COLUMN meta_json TEXT NULL',
+            ],
         ];
 
         foreach ($requiredColumns as $tableName => $columns) {

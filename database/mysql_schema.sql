@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS messages (
   conversation_id INT UNSIGNED NOT NULL,
   sender_user_id INT UNSIGNED NOT NULL,
   body TEXT NOT NULL,
+  meta_json TEXT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY idx_messages_conversation_id (conversation_id),
