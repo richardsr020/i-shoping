@@ -39,7 +39,7 @@ $error = $data['error'] ?? null;
                     <div style="display: flex; gap: 12px; align-items: center;">
                         <div style="width: 56px; height: 56px; border-radius: 10px; overflow: hidden; background: var(--dashboard-surface-2); flex: 0 0 56px;">
                             <?php if (!empty($product['image'])): ?>
-                                <img src="<?php echo htmlspecialchars((string)$product['image']); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" style="width: 56px; height: 56px; object-fit: cover;" onerror="this.style.display='none'" />
+                                <img src="<?php echo htmlspecialchars((string)$product['image']); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" style="width: 56px; height: 56px; object-fit: contain; object-position: center center; display:block; margin:0 auto;" onerror="this.style.display='none'" />
                             <?php endif; ?>
                         </div>
                         <div>

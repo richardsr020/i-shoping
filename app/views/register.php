@@ -148,7 +148,7 @@ require_once __DIR__ . '/../config.php';
 
                         <div class="checkbox-group">
                             <input type="checkbox" id="terms" name="terms" required>
-                            <label for="terms">J'accepte les <a href="#">Conditions d'utilisation</a> et la <a href="#">Politique de confidentialité</a></label>
+                            <label for="terms">J'accepte les <a href="<?php echo url('terms'); ?>">Conditions d'utilisation</a> et les <a href="<?php echo url('terms'); ?>">Terms</a></label>
                         </div>
 
                         <div class="checkbox-group">
@@ -199,10 +199,10 @@ require_once __DIR__ . '/../config.php';
         <div class="container">
             <div class="footer-content">
                 <div class="footer-links">
-                    <a href="#">À propos</a>
-                    <a href="#">Contact</a>
-                    <a href="#">Confidentialité</a>
-                    <a href="#">Conditions</a>
+                    <a href="<?php echo url('about'); ?>">A propos</a>
+                    <a href="<?php echo url('contact'); ?>">Contact</a>
+                    <a href="<?php echo url('terms'); ?>">Terms</a>
+                    <a href="<?php echo url('home'); ?>">Accueil</a>
                 </div>
                 <div class="social-icons">
                     <span>SUIVEZ-NOUS</span>

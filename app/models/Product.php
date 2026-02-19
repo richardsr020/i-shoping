@@ -33,9 +33,7 @@ class Product {
                 s.logo AS shop_logo,
                 s.banner AS shop_banner,
                 s.currency AS shop_currency,
-                s.payment_methods_json AS shop_payment_methods_json,
-                s.email_contact AS shop_email_contact,
-                s.phone AS shop_phone
+                s.payment_methods_json AS shop_payment_methods_json
             FROM products p
             INNER JOIN shops s ON s.id = p.shop_id
             WHERE p.id = ? AND p.status = \'active\'

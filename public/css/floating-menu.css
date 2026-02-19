@@ -252,9 +252,12 @@
 .cart-item-image {
     width: 60px;
     height: 60px;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center center;
     border-radius: var(--radius-md);
     background: var(--color-bg-tertiary);
+    display: block;
+    margin: 0 auto;
 }
 
 .cart-item-info {
@@ -464,6 +467,5 @@
         max-height: 85vh;
     }
 }
-
 
 

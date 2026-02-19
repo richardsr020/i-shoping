@@ -24,10 +24,14 @@ class ChatController {
         if (!isLoggedIn()) {
             $shopId = (int)($_GET['shop_id'] ?? 0);
             $productId = (int)($_GET['product_id'] ?? 0);
+            $productImage = trim((string)($_GET['product_image'] ?? ''));
             if ($shopId > 0) {
                 $target = 'chat&shop_id=' . $shopId;
                 if ($productId > 0) {
                     $target .= '&product_id=' . $productId;
+                }
+                if ($productImage !== '' && strlen($productImage) <= 2048) {
+                    $target .= '&product_image=' . rawurlencode($productImage);
                 }
                 $_SESSION['redirect_after_login'] = $target;
             } else {
@@ -146,6 +150,10 @@ class ChatController {
         $shopId = (int)($payload['shop_id'] ?? 0);
         $conversationId = (int)($payload['conversation_id'] ?? 0);
         $productId = (int)($payload['product_id'] ?? 0);
+        $requestedProductImage = trim((string)($payload['product_image'] ?? ''));
+        if (strlen($requestedProductImage) > 2048) {
+            $requestedProductImage = '';
+        }
         $body = (string)($payload['body'] ?? '');
 
         error_log('[chat.send] called uid=' . (int)($_SESSION['user_id'] ?? 0) . ' conversation_id=' . $conversationId . ' shop_id=' . $shopId . ' body_len=' . strlen(trim($body)));
@@ -197,6 +205,24 @@ class ChatController {
                 $product = $productStmt->fetch() ?: null;
                 if ($product && (int)($product['shop_id'] ?? 0) === $conversationShopId) {
                     $thumb = $this->resolveAssetUrl((string)($product['image'] ?? ''));
+                    if ($requestedProductImage !== '') {
+                        $allowedImages = [];
+                        if ($thumb !== '') {
+                            $allowedImages[$thumb] = true;
+                        }
+                        $extraImageStmt = $db->prepare('SELECT image FROM product_images WHERE product_id = ?');
+                        $extraImageStmt->execute([$productId]);
+                        $extraRows = $extraImageStmt->fetchAll();
+                        foreach ($extraRows as $extraRow) {
+                            $extraUrl = $this->resolveAssetUrl((string)($extraRow['image'] ?? ''));
+                            if ($extraUrl !== '') {
+                                $allowedImages[$extraUrl] = true;
+                            }
+                        }
+                        if (isset($allowedImages[$requestedProductImage])) {
+                            $thumb = $requestedProductImage;
+                        }
+                    }
                     if ($thumb !== '') {
                         $messageMeta['product'] = [
                             'id' => (int)($product['id'] ?? 0),

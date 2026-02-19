@@ -163,6 +163,22 @@ class Router {
             return;
         }
         
+        // Routes pages statiques
+        if ($this->page === 'about') {
+            $_SESSION['view_data'] = ['title' => 'A propos - ' . APP_NAME];
+            return;
+        }
+
+        if ($this->page === 'contact') {
+            $_SESSION['view_data'] = ['title' => 'Contact - ' . APP_NAME];
+            return;
+        }
+
+        if ($this->page === 'terms') {
+            $_SESSION['view_data'] = ['title' => 'Terms - ' . APP_NAME];
+            return;
+        }
+
         // Route par défaut : page d'accueil
         if ($this->page === 'home') {
             require_once CONTROLLERS_PATH . '/HomeController.php';
@@ -188,4 +204,3 @@ class Router {
         exit;
     }
 }
-

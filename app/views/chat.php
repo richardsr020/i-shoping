@@ -394,7 +394,9 @@ if ($ref !== '') {
             width: 50px;
             height: 50px;
             border-radius: 8px;
-            object-fit: cover;
+            object-fit: contain;
+            object-position: center center;
+            background: rgba(255, 255, 255, 0.55);
             flex: 0 0 50px;
         }
 

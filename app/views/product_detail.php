@@ -31,6 +31,28 @@ $resolveImageUrl = static function ($path): string {
 };
 
 $mainImageUrl = $resolveImageUrl((string)$mainImage);
+$shopId = (int)($product['shop_id'] ?? 0);
+$productId = (int)($product['id'] ?? 0);
+$chatBaseUrl = url('chat') . '&shop_id=' . $shopId . '&product_id=' . $productId;
+
+$galleryImages = [];
+$gallerySeen = [];
+if ($mainImageUrl !== '') {
+    $galleryImages[] = $mainImageUrl;
+    $gallerySeen[$mainImageUrl] = true;
+}
+foreach ($images as $img) {
+    $candidate = $resolveImageUrl((string)($img['image'] ?? ''));
+    if ($candidate === '' || isset($gallerySeen[$candidate])) {
+        continue;
+    }
+    $galleryImages[] = $candidate;
+    $gallerySeen[$candidate] = true;
+}
+$chatInitialUrl = $chatBaseUrl;
+if ($mainImageUrl !== '') {
+    $chatInitialUrl .= '&product_image=' . rawurlencode($mainImageUrl);
+}
 
 $price = (float)($product['price'] ?? 0);
 $promo = (float)($product['promo_price'] ?? 0);
@@ -70,6 +92,100 @@ if ($minOrderQty <= 0) {
     .pd-qty-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.12); background: var(--color-bg); color: var(--color-text); }
     .pd-qty-actions { display:flex; justify-content: flex-end; gap: 10px; }
     .pd-qty-close { border: none; background: transparent; color: var(--color-text-muted); cursor: pointer; padding: 6px 8px; }
+
+    .pd-main-media {
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: var(--color-bg-secondary);
+        box-shadow: var(--shadow-md);
+    }
+    .pd-main-media img {
+        width: 100%;
+        height: 520px;
+        object-fit: contain;
+        object-position: center center;
+        display: block;
+        margin: 0 auto;
+        background: var(--color-bg-secondary);
+    }
+    .pd-similar-strip {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        margin-top: var(--spacing-md);
+    }
+    .pd-thumbs-viewport {
+        min-width: 0;
+        overflow: hidden;
+    }
+    .pd-thumbs-track {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding-bottom: 6px;
+    }
+    .pd-thumbs-track::-webkit-scrollbar {
+        display: none;
+    }
+    .pd-thumb-btn {
+        border: 1px solid rgba(0,0,0,0.12);
+        background: var(--color-bg);
+        padding: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        width: 78px;
+        height: 78px;
+        flex: 0 0 auto;
+        cursor: pointer;
+    }
+    .pd-thumb-btn.is-active {
+        border-color: var(--color-primary);
+        box-shadow: inset 0 0 0 1px var(--color-primary);
+    }
+    .pd-thumb-btn img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center center;
+        display: block;
+        margin: 0 auto;
+        background: var(--color-bg-secondary);
+    }
+    .pd-thumbs-nav {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid rgba(0,0,0,0.12);
+        background: var(--color-bg);
+        color: var(--color-text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex: 0 0 34px;
+    }
+    .pd-thumbs-nav[disabled] {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    @media (max-width: 600px) {
+        .pd-main-media img { height: 360px; }
+        .pd-thumb-btn {
+            width: 68px;
+            height: 68px;
+            border-radius: 10px;
+        }
+        .pd-thumbs-nav {
+            width: 32px;
+            height: 32px;
+            flex-basis: 32px;
+        }
+    }
 </style>
 
 <main class="main-content container pd-main-content" style="padding-top: var(--spacing-lg);">
@@ -79,9 +195,9 @@ if ($minOrderQty <= 0) {
 
     <div class="pd-grid">
         <div>
-            <div style="border-radius: var(--radius-lg); overflow:hidden; background: var(--color-bg-secondary); box-shadow: var(--shadow-md);">
+            <div class="pd-main-media">
                 <?php if (!empty($mainImageUrl)): ?>
-                    <img id="pd-main-image" src="<?php echo htmlspecialchars((string)$mainImageUrl); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" style="width:100%; height:520px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
+                    <img id="pd-main-image" src="<?php echo htmlspecialchars((string)$mainImageUrl); ?>" alt="<?php echo htmlspecialchars((string)$product['name']); ?>" onerror="this.style.display='none'" />
                 <?php else: ?>
                     <div style="height:520px; display:flex; align-items:center; justify-content:center; color: var(--color-text-muted);">Aucune image</div>
                 <?php endif; ?>
@@ -89,25 +205,29 @@ if ($minOrderQty <= 0) {
 
             <div style="display:flex; gap: 10px; margin-top: var(--spacing-lg); flex-wrap: wrap;">
                 <button type="button" class="btn btn-primary" onclick="pdOpenQtyModal(<?php echo (int)$product['id']; ?>)">Ajouter au panier</button>
-                <a class="btn btn-ghost" href="<?php echo url('chat'); ?>&shop_id=<?php echo (int)($product['shop_id'] ?? 0); ?>&product_id=<?php echo (int)($product['id'] ?? 0); ?>" title="Contacter la boutique">
+                <a id="pd-contact-link" class="btn btn-ghost" data-chat-base="<?php echo htmlspecialchars((string)$chatBaseUrl); ?>" href="<?php echo htmlspecialchars((string)$chatInitialUrl); ?>" title="Contacter la boutique">
                     <i class="fas fa-comment-dots" style="margin-right: 8px;"></i>Contacter
                 </a>
                 <a class="btn btn-ghost" href="<?php echo url('profile_shop'); ?>&id=<?php echo (int)($product['shop_id'] ?? 0); ?>">Voir la boutique</a>
             </div>
 
-            <?php if (!empty($images)): ?>
-                <div style="display:flex; gap:10px; margin-top: var(--spacing-md); overflow-x:auto; padding-bottom:6px;">
-                    <?php foreach ($images as $img): ?>
-                        <?php
-                        $thumbImageUrl = $resolveImageUrl((string)($img['image'] ?? ''));
-                        if ($thumbImageUrl === '') {
-                            continue;
-                        }
-                        ?>
-                        <button type="button" style="border: 1px solid rgba(0,0,0,0.08); background: var(--color-bg); padding:0; border-radius:12px; overflow:hidden; width:78px; height:78px; flex:0 0 auto; cursor:pointer;" onclick="document.getElementById('pd-main-image').src=<?php echo htmlspecialchars(json_encode($thumbImageUrl), ENT_QUOTES, 'UTF-8'); ?>">
-                            <img src="<?php echo htmlspecialchars((string)$thumbImageUrl); ?>" alt="" style="width:78px; height:78px; object-fit:cover; display:block;" onerror="this.style.display='none'" />
-                        </button>
-                    <?php endforeach; ?>
+            <?php if (!empty($galleryImages)): ?>
+                <div class="pd-similar-strip" aria-label="Images similaires">
+                    <button id="pd-thumbs-prev" type="button" class="pd-thumbs-nav" aria-label="Image précédente">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="pd-thumbs-viewport">
+                        <div id="pd-thumbs-track" class="pd-thumbs-track">
+                            <?php foreach ($galleryImages as $index => $thumbImageUrl): ?>
+                                <button type="button" class="pd-thumb-btn<?php echo $index === 0 ? ' is-active' : ''; ?>" data-image-url="<?php echo htmlspecialchars((string)$thumbImageUrl); ?>" aria-label="Afficher image <?php echo $index + 1; ?>">
+                                    <img src="<?php echo htmlspecialchars((string)$thumbImageUrl); ?>" alt="" onerror="this.style.display='none'" />
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <button id="pd-thumbs-next" type="button" class="pd-thumbs-nav" aria-label="Image suivante">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             <?php endif; ?>
         </div>
@@ -238,8 +358,89 @@ if ($minOrderQty <= 0) {
 <script>
     window.BASE_URL = '<?php echo BASE_URL; ?>';
     window.PD_MIN_ORDER_QTY = <?php echo (int)$minOrderQty; ?>;
+    window.PD_CHAT_BASE_URL = <?php echo json_encode((string)$chatBaseUrl); ?>;
+    window.PD_INITIAL_IMAGE_URL = <?php echo json_encode((string)$mainImageUrl); ?>;
 
     let pdPendingProductId = null;
+
+    function pdSetContactLinkImage(imageUrl) {
+        const link = document.getElementById('pd-contact-link');
+        if (!link) return;
+
+        const base = window.PD_CHAT_BASE_URL || link.dataset.chatBase || '';
+        if (!base) return;
+
+        let href = base;
+        const normalized = (imageUrl || '').trim();
+        if (normalized !== '') {
+            href += '&product_image=' + encodeURIComponent(normalized);
+        }
+        link.href = href;
+    }
+
+    (function initPdGallery() {
+        const mainImage = document.getElementById('pd-main-image');
+        const thumbButtons = Array.from(document.querySelectorAll('.pd-thumb-btn'));
+        const track = document.getElementById('pd-thumbs-track');
+        const prevBtn = document.getElementById('pd-thumbs-prev');
+        const nextBtn = document.getElementById('pd-thumbs-next');
+
+        const setActiveThumb = (activeBtn) => {
+            thumbButtons.forEach((btn) => {
+                btn.classList.toggle('is-active', btn === activeBtn);
+            });
+        };
+
+        const setMainImage = (url, activeBtn) => {
+            const imageUrl = (url || '').trim();
+            if (mainImage && imageUrl !== '') {
+                mainImage.src = imageUrl;
+                mainImage.style.display = 'block';
+            }
+            pdSetContactLinkImage(imageUrl);
+            if (activeBtn) {
+                setActiveThumb(activeBtn);
+            }
+        };
+
+        thumbButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const imageUrl = btn.dataset.imageUrl || '';
+                if (imageUrl.trim() === '') return;
+                setMainImage(imageUrl, btn);
+            });
+        });
+
+        const updateNav = () => {
+            if (!track || !prevBtn || !nextBtn) return;
+
+            const maxScrollLeft = Math.max(0, track.scrollWidth - track.clientWidth);
+            const hasOverflow = maxScrollLeft > 4;
+
+            prevBtn.style.visibility = hasOverflow ? 'visible' : 'hidden';
+            nextBtn.style.visibility = hasOverflow ? 'visible' : 'hidden';
+            prevBtn.disabled = !hasOverflow || track.scrollLeft <= 2;
+            nextBtn.disabled = !hasOverflow || track.scrollLeft >= (maxScrollLeft - 2);
+        };
+
+        if (track && prevBtn && nextBtn) {
+            const scrollStep = () => Math.max(120, Math.floor(track.clientWidth * 0.72));
+            prevBtn.addEventListener('click', () => {
+                track.scrollBy({ left: -scrollStep(), behavior: 'smooth' });
+            });
+            nextBtn.addEventListener('click', () => {
+                track.scrollBy({ left: scrollStep(), behavior: 'smooth' });
+            });
+            track.addEventListener('scroll', () => {
+                window.requestAnimationFrame(updateNav);
+            }, { passive: true });
+            window.addEventListener('resize', updateNav);
+            setTimeout(updateNav, 0);
+        }
+
+        const initialImage = (mainImage && mainImage.getAttribute('src')) || window.PD_INITIAL_IMAGE_URL || '';
+        pdSetContactLinkImage(initialImage);
+    })();
 
     function pdOpenQtyModal(productId) {
         pdPendingProductId = productId;

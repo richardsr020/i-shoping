@@ -13,6 +13,15 @@
       return 0;
     }
   }
+  function getStringParam(name){
+    try{
+      const u = new URL(window.location.href);
+      const v = u.searchParams.get(name);
+      return v ? String(v).trim() : '';
+    } catch(e){
+      return '';
+    }
+  }
 
   document.addEventListener('DOMContentLoaded', async () => {
     if(!window.APP_URL || !window.CURRENT_USER_ID) return;
@@ -35,6 +44,7 @@
     let pollInFlight = false;
     let renderedMessageIds = new Set();
     let pendingProductId = requestedShopId > 0 ? getIntParam('product_id') : 0;
+    let pendingProductImage = pendingProductId > 0 ? getStringParam('product_image') : '';
 
     function setStatus(msg){
       const el = qs('.chat-status');
@@ -182,6 +192,9 @@
         const payload = {conversation_id:activeConversationId,body};
         if(pendingProductId > 0){
           payload.product_id = pendingProductId;
+          if(pendingProductImage !== ''){
+            payload.product_image = pendingProductImage;
+          }
         }
         const res = await fetch(apiSend,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
         const data = await res.json().catch(()=>({}));
@@ -191,6 +204,7 @@
         }
         if(payload.product_id){
           pendingProductId = 0;
+          pendingProductImage = '';
         }
         setStatus('');
         await poll();
