@@ -425,8 +425,8 @@ if ($ref !== '') {
         /* Zone de discussion */
         .chat-area {
             flex: 1;
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-rows: auto auto minmax(0, 1fr) auto;
             background-color: var(--color-bg-secondary);
             min-width: 0;
             min-height: 0;
@@ -591,9 +591,8 @@ if ($ref !== '') {
             border-top: none;
             width: 100%;
             min-width: 0;
-            position: sticky;
-            bottom: 0;
-            z-index: 6;
+            position: relative;
+            z-index: 2;
             box-shadow: 0 -6px 16px rgba(0,0,0,0.08);
         }
 
@@ -748,7 +747,7 @@ if ($ref !== '') {
             .main-content {
                 padding-left: max(12px, env(safe-area-inset-left));
                 padding-right: max(12px, env(safe-area-inset-right));
-                padding-bottom: max(10px, env(safe-area-inset-bottom));
+                padding-bottom: 0;
             }
 
             .conversation-toggle-btn {
@@ -935,7 +934,8 @@ if ($ref !== '') {
                 rafId = 0;
                 const vv = window.visualViewport;
                 const height = vv ? vv.height : window.innerHeight;
-                const safeHeight = Math.max(320, Math.round(height || 0));
+                const safeHeight = Math.round(height || window.innerHeight || 0);
+                if(safeHeight < 180) return;
                 root.style.setProperty('--chat-vvh', safeHeight + 'px');
             }
 
