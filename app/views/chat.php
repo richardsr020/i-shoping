@@ -54,6 +54,7 @@ if ($ref !== '') {
             line-height: 1.6;
             display: flex;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
         }
 
@@ -189,6 +190,7 @@ if ($ref !== '') {
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-width: 0;
             min-height: 0;
         }
 
@@ -286,6 +288,7 @@ if ($ref !== '') {
             flex: 1;
             display: flex;
             padding: 0;
+            min-width: 0;
             min-height: 0;
         }
 
@@ -424,6 +427,7 @@ if ($ref !== '') {
             display: flex;
             flex-direction: column;
             background-color: var(--color-bg-secondary);
+            min-width: 0;
             min-height: 0;
         }
 
@@ -453,6 +457,7 @@ if ($ref !== '') {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-width: 0;
             position: relative;
             z-index: 5;
         }
@@ -461,6 +466,8 @@ if ($ref !== '') {
             display: flex;
             align-items: center;
             gap: 15px;
+            min-width: 0;
+            flex: 1;
         }
 
         .chat-partner-avatar {
@@ -477,14 +484,24 @@ if ($ref !== '') {
             flex-shrink: 0;
         }
 
+        .chat-partner-info {
+            min-width: 0;
+        }
+
         .chat-partner-info h3 {
             font-size: 16px;
             margin-bottom: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .chat-partner-info p {
             font-size: 13px;
             color: var(--color-text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .chat-actions {
@@ -563,6 +580,8 @@ if ($ref !== '') {
             padding: 20px;
             background-color: var(--color-bg);
             border-top: none;
+            width: 100%;
+            min-width: 0;
         }
 
         .input-actions {
@@ -588,6 +607,8 @@ if ($ref !== '') {
             display: flex;
             gap: 10px;
             align-items: flex-end;
+            width: 100%;
+            min-width: 0;
         }
 
         .message-input {
@@ -602,6 +623,8 @@ if ($ref !== '') {
             min-height: 44px;
             background: var(--color-bg-tertiary);
             color: var(--color-text);
+            width: 100%;
+            min-width: 0;
         }
 
         .message-input:focus {
@@ -620,6 +643,7 @@ if ($ref !== '') {
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
+            flex-shrink: 0;
         }
 
         .send-btn:hover {
@@ -703,6 +727,7 @@ if ($ref !== '') {
             body {
                 flex-direction: column;
                 height: 100vh;
+                height: 100dvh;
                 overflow: hidden;
             }
 
@@ -714,8 +739,34 @@ if ($ref !== '') {
 
             .messaging-content {
                 flex-direction: column;
-                height: 100vh;
+                height: 100%;
                 overflow: hidden;
+            }
+
+            .chat-header {
+                padding: 12px 14px;
+            }
+
+            .messages-container {
+                padding: 14px 12px;
+            }
+
+            .message-input-container {
+                padding: 12px;
+                padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            }
+
+            .message-input-wrapper {
+                gap: 8px;
+            }
+
+            .message-input {
+                font-size: 16px;
+            }
+
+            .send-btn {
+                width: 40px;
+                height: 40px;
             }
 
             .conversations-sidebar {
