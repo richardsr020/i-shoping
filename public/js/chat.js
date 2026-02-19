@@ -195,6 +195,7 @@
         setStatus('');
         await poll();
         messagesEl.scrollTop = messagesEl.scrollHeight;
+        try{ document.dispatchEvent(new CustomEvent('chat:message-sent')); }catch(_e){}
       }catch(e){
         console.error(e);
         setStatus('Erreur réseau');

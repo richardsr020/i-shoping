@@ -357,6 +357,34 @@
     margin-top: var(--spacing-lg);
 }
 
+/* Style verre pour le modal de filtres */
+#filters-modal {
+    background: rgba(8, 12, 20, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#filters-modal .modal {
+    background: rgba(255, 255, 255, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.24);
+}
+
+[data-theme="dark"] #filters-modal .modal {
+    background: rgba(22, 24, 28, 0.62);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+#filters-modal .modal-header,
+#filters-modal .modal-footer {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+[data-theme="dark"] #filters-modal .modal-header,
+[data-theme="dark"] #filters-modal .modal-footer {
+    background: rgba(0, 0, 0, 0.2);
+}
+
 /* ============================================
    MODAL NOTIFICATIONS
    ============================================ */
@@ -436,7 +464,6 @@
         max-height: 85vh;
     }
 }
-
 
 
 

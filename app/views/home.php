@@ -53,7 +53,7 @@ require_once __DIR__ . '/../config.php';
 
 <!-- Modal Panier -->
 <div id="cart-modal" class="modal-overlay">
-    <!-- <div class="modal">
+    <div class="modal">
         <div class="modal-header">
             <h2>Mon panier</h2>
             <button class="modal-close" aria-label="Fermer">
@@ -61,15 +61,15 @@ require_once __DIR__ . '/../config.php';
             </button>
         </div>
         <div id="cart-modal-body" class="modal-body">
-                Contenu chargé dynamiquement -->
-        <!-- </div>
+                <!-- Contenu chargé dynamiquement -->
+        </div>
         <div class="modal-footer">
             <button class="btn btn-primary" onclick="alert('Fonctionnalité de commande à venir')">
                 Passer la commande
             </button>
                 </div>
             </div>
-        </div> --> 
+        </div>
 
 <!-- Modal Filtres -->
 <div id="filters-modal" class="modal-overlay">

@@ -71,6 +71,21 @@ class HomePage {
         
         if (!menuBtn || !menuItems) return;
         
+        const bindClick = (id, handler) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                    handler();
+                } finally {
+                    menuBtn.classList.remove('active');
+                    menuItems.classList.remove('active');
+                }
+            });
+        };
+        
         // Animation de vibration au chargement
         menuBtn.classList.add('vibrating');
         setTimeout(() => {
@@ -93,23 +108,23 @@ class HomePage {
         });
         
         // Actions des items du menu
-        document.getElementById('menu-user').addEventListener('click', () => {
+        bindClick('menu-user', () => {
             window.location.href = `${window.BASE_URL}/index.php?page=dashboard_shop`;
         });
         
-        document.getElementById('menu-cart').addEventListener('click', () => {
+        bindClick('menu-cart', () => {
             window.location.href = `${window.BASE_URL}/index.php?page=orders`;
         });
         
-        document.getElementById('menu-filters').addEventListener('click', () => {
+        bindClick('menu-filters', () => {
             this.openFiltersModal();
         });
         
-        document.getElementById('menu-notifications').addEventListener('click', () => {
-            this.openNotificationsModal();
+        bindClick('menu-notifications', () => {
+            window.location.href = `${window.BASE_URL}/index.php?page=dashboard_shop&tab=notifications`;
         });
         
-        document.getElementById('menu-add').addEventListener('click', () => {
+        bindClick('menu-add', () => {
             window.location.href = `${window.BASE_URL}/index.php?page=dashboard_shop`;
         });
     }
@@ -529,4 +544,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-
